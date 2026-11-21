@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ExpenseWithItems, deleteExpenseAction } from "@/app/actions/expense";
 import { formatRupiah, formatDateIndo } from "@/lib/utils";
+import PaymentProofModal, { PaymentProofModalItem } from "@/components/dashboard/PaymentProofModal";
 import {
   IconBolt,
   IconWifi,
@@ -20,7 +21,8 @@ import {
   IconReceiptOff,
   IconTrashX,
   IconUser,
-  IconExternalLink,
+  IconShieldCheck,
+  IconPhoto,
 } from "@tabler/icons-react";
 
 interface ExpenseTableProps {
@@ -37,6 +39,7 @@ export default function ExpenseTable({
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "waiting" | "paid">("all");
   const [expandedExpenseId, setExpandedExpenseId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedProofItem, setSelectedProofItem] = useState<PaymentProofModalItem | null>(null);
 
   // Helper Ikon Kategori
   function getCategoryInfo(category: string) {
@@ -380,19 +383,75 @@ export default function ExpenseTable({
                             </div>
                           )}
 
-                          {item.proofImageUrl && (
-                            <div className="mt-2 pt-2 border-top">
-                              <a
-                                href={item.proofImageUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="btn btn-outline-teal btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
+                          {/* Aksi Verifikasi Bukti Transfer & Status Pelunasan */}
+                          <div className="mt-2 pt-2 border-top">
+                            {item.status === "waiting_approval" ? (
+                              <button
+                                type="button"
+                                className="btn btn-warning btn-sm w-100 d-flex align-items-center justify-content-center gap-1 fw-bold shadow-sm"
+                                onClick={() =>
+                                  setSelectedProofItem({
+                                    id: item.id,
+                                    userName: item.userProfile?.fullName || "Roommate",
+                                    userPhone: item.userProfile?.phoneNumber,
+                                    expenseTitle: exp.title,
+                                    splitAmount: item.splitAmount,
+                                    status: item.status,
+                                    proofImageUrl: item.proofImageUrl,
+                                    paidAt: item.paidAt,
+                                    notes: item.notes,
+                                  })
+                                }
                               >
-                                <IconExternalLink size={14} />
+                                <IconShieldCheck size={16} />
+                                <span>Periksa Bukti & Verifikasi</span>
+                              </button>
+                            ) : item.proofImageUrl ? (
+                              <button
+                                type="button"
+                                className="btn btn-outline-teal btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
+                                onClick={() =>
+                                  setSelectedProofItem({
+                                    id: item.id,
+                                    userName: item.userProfile?.fullName || "Roommate",
+                                    userPhone: item.userProfile?.phoneNumber,
+                                    expenseTitle: exp.title,
+                                    splitAmount: item.splitAmount,
+                                    status: item.status,
+                                    proofImageUrl: item.proofImageUrl,
+                                    paidAt: item.paidAt,
+                                    notes: item.notes,
+                                  })
+                                }
+                              >
+                                <IconPhoto size={15} />
                                 <span>Lihat Bukti Transfer</span>
-                              </a>
-                            </div>
-                          )}
+                              </button>
+                            ) : isAdmin && item.status === "pending" ? (
+                              <button
+                                type="button"
+                                className="btn btn-outline-secondary btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
+                                onClick={() =>
+                                  setSelectedProofItem({
+                                    id: item.id,
+                                    userName: item.userProfile?.fullName || "Roommate",
+                                    userPhone: item.userProfile?.phoneNumber,
+                                    expenseTitle: exp.title,
+                                    splitAmount: item.splitAmount,
+                                    status: item.status,
+                                    proofImageUrl: item.proofImageUrl,
+                                    paidAt: item.paidAt,
+                                    notes: item.notes,
+                                  })
+                                }
+                              >
+                                <IconCheck size={15} />
+                                <span>Verifikasi Pelunasan</span>
+                              </button>
+                            ) : (
+                              <div className="text-muted small text-center py-1">Belum ada bukti</div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -403,6 +462,14 @@ export default function ExpenseTable({
           })()}
         </div>
       )}
+
+      {/* Modal Pratinjau Bukti Transfer & Approval Koordinator (TASK-10) */}
+      <PaymentProofModal
+        isOpen={!!selectedProofItem}
+        item={selectedProofItem}
+        isAdmin={isAdmin}
+        onClose={() => setSelectedProofItem(null)}
+      />
     </div>
   );
 }

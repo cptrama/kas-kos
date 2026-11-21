@@ -315,6 +315,130 @@ export async function deleteExpenseAction(formData: FormData): Promise<ExpenseRe
 }
 
 /**
+ * Server Action: [TASK-10] Verifikasi Pembayaran & Approval Bukti Transfer oleh Koordinator Kos
+ */
+export async function approvePaymentAction(formData: FormData): Promise<ExpenseResponse> {
+  const billItemId = formData.get("bill_item_id")?.toString().trim();
+
+  if (!billItemId) {
+    return { success: false, error: "ID porsi tagihan tidak valid." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Sesi telah berakhir. Silakan login kembali." };
+  }
+
+  // Ambil data bill_item beserta expenses untuk mengecek wewenang admin grup
+  const { data: billItem, error: fetchErr } = await supabase
+    .from("bill_items")
+    .select(`
+      id,
+      split_amount,
+      status,
+      expenses:expense_id (
+        id,
+        group_id,
+        title
+      )
+    `)
+    .eq("id", billItemId)
+    .single();
+
+  if (fetchErr || !billItem || !billItem.expenses) {
+    return { success: false, error: "Data tagihan anggota tidak ditemukan." };
+  }
+
+  const groupId = (billItem.expenses as any).group_id;
+  const isAdmin = await verifyGroupAdmin(supabase, groupId, user.id);
+  if (!isAdmin) {
+    return { success: false, error: "Hanya koordinator kos yang berwenang memverifikasi pembayaran." };
+  }
+
+  // Ubah status tagihan dari waiting_approval -> paid dan catat timestamp paid_at
+  const { error: updateErr } = await supabase
+    .from("bill_items")
+    .update({
+      status: "paid",
+      paid_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", billItemId);
+
+  if (updateErr) {
+    return { success: false, error: updateErr.message || "Gagal memverifikasi pembayaran." };
+  }
+
+  revalidatePath("/dashboard", "layout");
+  return {
+    success: true,
+    message: `Pembayaran sebesar Rp ${Number(billItem.split_amount).toLocaleString("id-ID")} berhasil diverifikasi dan ditandai LUNAS.`,
+  };
+}
+
+/**
+ * Server Action: [TASK-10] Menolak / Membatalkan Verifikasi Pembayaran (Kembali ke Pending)
+ */
+export async function rejectPaymentAction(formData: FormData): Promise<ExpenseResponse> {
+  const billItemId = formData.get("bill_item_id")?.toString().trim();
+  const reason = formData.get("reason")?.toString().trim() || "Bukti transfer tidak valid.";
+
+  if (!billItemId) {
+    return { success: false, error: "ID porsi tagihan tidak valid." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Sesi telah berakhir. Silakan login kembali." };
+  }
+
+  const { data: billItem, error: fetchErr } = await supabase
+    .from("bill_items")
+    .select(`
+      id,
+      expenses:expense_id (
+        group_id
+      )
+    `)
+    .eq("id", billItemId)
+    .single();
+
+  if (fetchErr || !billItem || !billItem.expenses) {
+    return { success: false, error: "Data tagihan tidak ditemukan." };
+  }
+
+  const groupId = (billItem.expenses as any).group_id;
+  const isAdmin = await verifyGroupAdmin(supabase, groupId, user.id);
+  if (!isAdmin) {
+    return { success: false, error: "Hanya koordinator kos yang berwenang menolak verifikasi." };
+  }
+
+  const { error: updateErr } = await supabase
+    .from("bill_items")
+    .update({
+      status: "pending",
+      notes: reason,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", billItemId);
+
+  if (updateErr) {
+    return { success: false, error: updateErr.message || "Gagal memperbarui status tagihan." };
+  }
+
+  revalidatePath("/dashboard", "layout");
+  return { success: true, message: "Status pembayaran berhasil dikembalikan ke Belum Bayar." };
+}
+
+/**
  * Query: [TASK-08] Mengambil seluruh daftar pengeluaran kos beserta rincian pembagian anggota
  */
 export async function getGroupExpenses(groupId: string): Promise<ExpenseWithItems[]> {
