@@ -1,9 +1,9 @@
 import { getCurrentUserProfile } from "@/app/actions/auth";
 import { getUserGroups, getGroupMembers } from "@/app/actions/group";
-import { getGroupFinancialStats } from "@/app/actions/expense";
+import { getGroupFinancialStats, getGroupExpenses } from "@/app/actions/expense";
 import GroupModals from "@/components/dashboard/GroupModals";
 import CoordinatorStatCards from "@/components/dashboard/CoordinatorStatCards";
-import CoordinatorQuickActions from "@/components/dashboard/CoordinatorQuickActions";
+import ExpenseSection from "@/components/dashboard/ExpenseSection";
 import {
   IconBuildingCommunity,
   IconUsers,
@@ -21,9 +21,10 @@ export default async function DashboardPage() {
   const activeGroup = activeGroupData?.group || null;
   const isAdmin = activeGroupData?.role === "admin_grup";
 
-  // Ambil daftar anggota dan ringkasan keuangan kas jika sudah punya grup
+  // Ambil daftar anggota, ringkasan kas, dan daftar pengeluaran aktif
   const members = activeGroup ? await getGroupMembers(activeGroup.id) : [];
   const financialStats = activeGroup ? await getGroupFinancialStats(activeGroup.id) : null;
+  const expenses = activeGroup ? await getGroupExpenses(activeGroup.id) : [];
 
   return (
     <div>
@@ -62,18 +63,19 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Jika sudah ada grup: Tampilkan Quick Actions, Stat Cards, Info Rekening & Anggota */}
+      {/* Jika sudah ada grup: Tampilkan Quick Actions, Stat Cards, Data Table Pengeluaran, Info Rekening & Anggota */}
       {activeGroup && (
         <>
-          {/* Quick Actions (Buat Tagihan Baru & Salin Kode Invite) */}
-          <CoordinatorQuickActions
-            inviteCode={activeGroup.invite_code}
-            groupName={activeGroup.group_name}
-            isAdmin={isAdmin}
-          />
-
           {/* 3 Stat Cards Tabler UI: Total Kas Terkumpul, Sisa Tunggakan, Jumlah Anggota Aktif */}
           {financialStats && <CoordinatorStatCards stats={financialStats} />}
+
+          {/* Bagian Manajemen Tagihan: Quick Actions + Pop-up Modal + Data Table dengan Tabler Badges */}
+          <ExpenseSection
+            activeGroup={activeGroup}
+            isAdmin={isAdmin}
+            memberCount={members.length}
+            initialExpenses={expenses}
+          />
 
           <div className="row row-cards">
             {/* Rekening Tujuan Pembayaran */}
