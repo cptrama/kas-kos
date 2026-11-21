@@ -1,6 +1,7 @@
 import { getCurrentUserProfile, signOutAction } from "@/app/actions/auth";
 import Link from "next/link";
-import { IconWallet, IconUser, IconLogout } from "@tabler/icons-react";
+import Image from "next/image";
+import { IconUser, IconLogout } from "@tabler/icons-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default async function DashboardLayout({
@@ -16,9 +17,14 @@ export default async function DashboardLayout({
       <header className="navbar navbar-expand-md navbar-light bg-white border-bottom sticky-top">
         <div className="container-xl">
           <Link href="/dashboard" className="navbar-brand d-flex align-items-center gap-2">
-            <span className="badge bg-green text-white p-2 rounded-circle">
-              <IconWallet size={20} stroke={2} />
-            </span>
+            <Image
+              src="/logo.png"
+              alt="Logo KasKos"
+              width={34}
+              height={34}
+              className="object-fit-contain"
+              priority
+            />
             <span className="fs-2 fw-bold text-dark">
               Kas<span className="text-teal">Kos</span>
             </span>

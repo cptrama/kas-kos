@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   IconBolt,
   IconWifi,
@@ -28,9 +29,14 @@ export default function HomePage() {
       <header className="navbar navbar-expand-md navbar-light sticky-top bg-white border-bottom shadow-xs">
         <div className="container-xl">
           <Link href="/" className="navbar-brand d-flex align-items-center gap-2">
-            <span className="badge bg-teal text-white p-2 rounded-circle shadow-sm">
-              <IconWallet size={20} stroke={2.5} />
-            </span>
+            <Image
+              src="/logo.png"
+              alt="Logo KasKos"
+              width={38}
+              height={38}
+              className="object-fit-contain"
+              priority
+            />
             <span className="fs-2 fw-bold text-dark">
               Kas<span className="text-teal">Kos</span>
             </span>
@@ -620,9 +626,13 @@ export default function HomePage() {
           <div className="row g-4 align-items-center justify-content-between">
             <div className="col-md-5">
               <div className="d-flex align-items-center gap-2 mb-2">
-                <span className="badge bg-teal text-white p-2 rounded-circle">
-                  <IconWallet size={18} stroke={2.5} />
-                </span>
+                <Image
+                  src="/logo.png"
+                  alt="Logo KasKos"
+                  width={32}
+                  height={32}
+                  className="object-fit-contain"
+                />
                 <span className="fs-2 fw-bold text-white">
                   Kas<span className="text-teal">Kos</span>
                 </span>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { signInAction } from "@/app/actions/auth";
 import {
   IconWallet,
@@ -47,9 +48,14 @@ export default function LoginPage() {
         {/* Brand Header */}
         <div className="text-center mb-4">
           <Link href="/" className="navbar-brand d-inline-flex align-items-center gap-2 text-decoration-none">
-            <span className="badge bg-teal text-white p-2 rounded-circle shadow-sm">
-              <IconWallet size={24} stroke={2.5} />
-            </span>
+            <Image
+              src="/logo.png"
+              alt="Logo KasKos"
+              width={42}
+              height={42}
+              className="object-fit-contain"
+              priority
+            />
             <span className="fs-1 fw-bold text-dark">
               Kas<span className="text-teal">Kos</span>
             </span>

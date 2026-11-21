@@ -13,7 +13,12 @@ export const metadata: Metadata = {
   description:
     "Aplikasi web micro-SaaS untuk mempermudah penghuni kos mengelola pengeluaran bersama, split bill otomatis, dan upload bukti transfer.",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/logo.png", type: "image/png" },
+      { url: "/favicon.ico" },
+    ],
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   },
 };
 
