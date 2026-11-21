@@ -1,0 +1,20 @@
+@import "@tabler/core/dist/css/tabler.min.css";
+
+/* Custom utility & layout adjustments */
+:root {
+  --tblr-primary: #0ca678;
+  --tblr-primary-rgb: 12, 166, 120;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  background-color: #f8fafc;
+}
+
+.brand-emerald {
+  color: #0ca678;
+}
+
+.bg-brand-emerald {
+  background-color: #0ca678;
+}
