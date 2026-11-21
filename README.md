@@ -64,3 +64,7 @@ Proyek ini dikembangkan oleh kelompok 3 mahasiswa dengan pembagian kontributor r
 - **Mahasiswa 1 (Lead):** Backend Core, Database Schema, Authentication & Middleware
 - **Mahasiswa 2:** Coordinator Dashboard, Expense CRUD & Auto-Split Engine
 - **Mahasiswa 3:** Member Dashboard UI, Payment Flow, Storage & CI/CD Pipeline
+
+Untuk arsitektur lengkap, panduan kontribusi kode, serta pengujian CI/CD, silakan baca [Panduan Kontribusi](docs/CONTRIBUTING.md).
+
+Data simulasi 10 akun tester dapat diisi melalui [mock_seed_kaskos.sql](mock_seed_kaskos.sql).
