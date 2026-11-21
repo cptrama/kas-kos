@@ -3,11 +3,22 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signInAction } from "@/app/actions/auth";
-import { IconWallet, IconLock, IconMail, IconArrowRight } from "@tabler/icons-react";
+import {
+  IconWallet,
+  IconLock,
+  IconMail,
+  IconArrowRight,
+  IconEye,
+  IconEyeOff,
+  IconAlertCircle,
+  IconArrowLeft,
+  IconShieldLock,
+} from "@tabler/icons-react";
 
 export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -21,84 +32,117 @@ export default function LoginPage() {
         setErrorMessage(result.error);
       }
     } catch (err: unknown) {
-      // Jika redirect Next.js dipicu, biarkan berjalan
       if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) {
         return;
       }
-      setErrorMessage("Terjadi kesalahan saat mencoba masuk. Silakan coba lagi.");
+      setErrorMessage("Terjadi kendala saat mencoba masuk. Silakan periksa kembali email & kata sandi Anda.");
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <div className="page page-center bg-light min-vh-100 d-flex align-items-center justify-content-center py-4">
+    <div className="page page-center bg-light min-vh-100 d-flex align-items-center justify-content-center py-5">
       <div className="container container-tight py-4" style={{ maxWidth: "440px" }}>
+        {/* Brand Header */}
         <div className="text-center mb-4">
-          <Link href="/" className="navbar-brand d-inline-flex align-items-center gap-2">
-            <span className="badge bg-green text-white p-2 rounded-circle">
-              <IconWallet size={24} stroke={2} />
+          <Link href="/" className="navbar-brand d-inline-flex align-items-center gap-2 text-decoration-none">
+            <span className="badge bg-teal text-white p-2 rounded-circle shadow-sm">
+              <IconWallet size={24} stroke={2.5} />
             </span>
             <span className="fs-1 fw-bold text-dark">
               Kas<span className="text-teal">Kos</span>
             </span>
           </Link>
-          <p className="text-muted mt-2">Masuk ke akun kamar kos Anda</p>
+          <p className="text-muted small mt-2">
+            Kelola kas dan tagihan bersama tanpa rasa sungkan
+          </p>
         </div>
 
-        <div className="card shadow-sm border-0">
+        {/* Login Card */}
+        <div className="card shadow-sm border-0 rounded-3 overflow-hidden">
+          <div className="card-status-top bg-teal"></div>
           <div className="card-body p-4">
-            <h2 className="card-title text-center mb-4 fw-bold">Selamat Datang Kembali</h2>
+            <h2 className="card-title text-center mb-1 fw-bold fs-2 text-dark">
+              Selamat Datang Kembali! 👋
+            </h2>
+            <p className="text-muted text-center small mb-4">
+              Masuk untuk memantau kas kamar kos Anda
+            </p>
 
+            {/* Error Message Alert */}
             {errorMessage && (
-              <div className="alert alert-danger d-flex align-items-center mb-3" role="alert">
+              <div className="alert alert-danger alert-dismissible d-flex align-items-start gap-2 mb-3" role="alert">
+                <IconAlertCircle size={20} className="text-danger flex-shrink-0 mt-1" />
                 <div className="small">{errorMessage}</div>
               </div>
             )}
 
             <form onSubmit={handleSubmit} autoComplete="on">
+              {/* Email Input */}
               <div className="mb-3">
-                <label className="form-label required">Alamat Email</label>
+                <label className="form-label fw-semibold text-dark">
+                  Alamat Email <span className="text-danger">*</span>
+                </label>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text">
+                  <span className="input-group-text bg-white border-end-0">
                     <IconMail size={18} className="text-muted" />
                   </span>
                   <input
                     type="email"
                     name="email"
                     required
-                    className="form-control"
+                    className="form-control ps-1"
                     placeholder="nama@email.com"
                     autoComplete="email"
                   />
                 </div>
               </div>
 
-              <div className="mb-4">
-                <label className="form-label required">Kata Sandi</label>
+              {/* Password Input */}
+              <div className="mb-3">
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <label className="form-label fw-semibold text-dark m-0">
+                    Kata Sandi <span className="text-danger">*</span>
+                  </label>
+                </div>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text">
+                  <span className="input-group-text bg-white border-end-0">
                     <IconLock size={18} className="text-muted" />
                   </span>
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     name="password"
                     required
-                    className="form-control"
-                    placeholder="Minimal 6 karakter"
+                    className="form-control ps-1"
+                    placeholder="Masukkan kata sandi akun"
                     autoComplete="current-password"
                   />
+                  <span className="input-group-text bg-white border-start-0 pe-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="btn btn-link link-secondary p-0 text-muted"
+                      title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                    >
+                      {showPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+                    </button>
+                  </span>
                 </div>
               </div>
 
-              <div className="form-footer">
+              {/* Submit Button */}
+              <div className="form-footer mt-4">
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="btn btn-teal w-100 d-flex align-items-center justify-content-center gap-2"
+                  className="btn btn-teal w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold shadow-sm"
                 >
                   {isLoading ? (
-                    <span>Memproses...</span>
+                    <>
+                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      <span>Memverifikasi Akun...</span>
+                    </>
                   ) : (
                     <>
                       <span>Masuk ke Dashboard</span>
@@ -109,12 +153,24 @@ export default function LoginPage() {
               </div>
             </form>
           </div>
+
+          <div className="card-footer bg-light border-top py-3 text-center small text-muted">
+            Belum punya akun kamar kos?{" "}
+            <Link href="/register" className="text-teal fw-bold text-decoration-none">
+              Daftar Gratis di sini
+            </Link>
+          </div>
         </div>
 
-        <div className="text-center text-muted mt-3">
-          Belum punya akun kamar kos?{" "}
-          <Link href="/register" className="text-teal fw-semibold">
-            Daftar Gratis di sini
+        {/* Security badge & back link */}
+        <div className="d-flex flex-column align-items-center gap-2 mt-4 text-center">
+          <div className="text-muted small d-flex align-items-center gap-1">
+            <IconShieldLock size={16} className="text-teal" />
+            <span>Autentikasi terenkripsi aman oleh Supabase Auth</span>
+          </div>
+          <Link href="/" className="text-secondary small d-inline-flex align-items-center gap-1 text-decoration-none mt-1 hover-teal">
+            <IconArrowLeft size={16} />
+            <span>Kembali ke Halaman Utama</span>
           </Link>
         </div>
       </div>

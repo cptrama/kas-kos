@@ -3,12 +3,26 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signUpAction } from "@/app/actions/auth";
-import { IconWallet, IconLock, IconMail, IconUser, IconPhone, IconArrowRight } from "@tabler/icons-react";
+import {
+  IconWallet,
+  IconLock,
+  IconMail,
+  IconUser,
+  IconPhone,
+  IconArrowRight,
+  IconEye,
+  IconEyeOff,
+  IconAlertCircle,
+  IconCheck,
+  IconArrowLeft,
+  IconShieldLock,
+} from "@tabler/icons-react";
 
 export default function RegisterPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,122 +42,169 @@ export default function RegisterPage() {
       if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) {
         return;
       }
-      setErrorMessage("Terjadi kendala saat mendaftar. Silakan coba kembali.");
+      setErrorMessage("Terjadi kendala saat mendaftar. Silakan coba kembali beberapa saat lagi.");
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <div className="page page-center bg-light min-vh-100 d-flex align-items-center justify-content-center py-4">
-      <div className="container container-tight py-4" style={{ maxWidth: "460px" }}>
+    <div className="page page-center bg-light min-vh-100 d-flex align-items-center justify-content-center py-5">
+      <div className="container container-tight py-4" style={{ maxWidth: "480px" }}>
+        {/* Brand Header */}
         <div className="text-center mb-4">
-          <Link href="/" className="navbar-brand d-inline-flex align-items-center gap-2">
-            <span className="badge bg-green text-white p-2 rounded-circle">
-              <IconWallet size={24} stroke={2} />
+          <Link href="/" className="navbar-brand d-inline-flex align-items-center gap-2 text-decoration-none">
+            <span className="badge bg-teal text-white p-2 rounded-circle shadow-sm">
+              <IconWallet size={24} stroke={2.5} />
             </span>
             <span className="fs-1 fw-bold text-dark">
               Kas<span className="text-teal">Kos</span>
             </span>
           </Link>
-          <p className="text-muted mt-2">Buat akun untuk kelola kas kontrakan tanpa drama</p>
+          <p className="text-muted small mt-2">
+            Mulai kelola uang patungan kos tanpa selisih dan tanpa drama
+          </p>
         </div>
 
-        <div className="card shadow-sm border-0">
+        {/* Register Card */}
+        <div className="card shadow-sm border-0 rounded-3 overflow-hidden">
+          <div className="card-status-top bg-teal"></div>
           <div className="card-body p-4">
-            <h2 className="card-title text-center mb-4 fw-bold">Pendaftaran Akun Baru</h2>
+            <h2 className="card-title text-center mb-1 fw-bold fs-2 text-dark">
+              Buat Akun Baru 🚀
+            </h2>
+            <p className="text-muted text-center small mb-4">
+              Gratis 100% untuk seluruh anak kos & mahasiswa
+            </p>
 
+            {/* Error Message Alert */}
             {errorMessage && (
-              <div className="alert alert-danger d-flex align-items-center mb-3" role="alert">
+              <div className="alert alert-danger alert-dismissible d-flex align-items-start gap-2 mb-3" role="alert">
+                <IconAlertCircle size={20} className="text-danger flex-shrink-0 mt-1" />
                 <div className="small">{errorMessage}</div>
               </div>
             )}
 
+            {/* Success Message Alert */}
             {successMessage && (
-              <div className="alert alert-success d-flex align-items-center mb-3" role="alert">
+              <div className="alert alert-success d-flex align-items-start gap-2 mb-3" role="alert">
+                <IconCheck size={20} className="text-success flex-shrink-0 mt-1" />
                 <div className="small">{successMessage}</div>
               </div>
             )}
 
             <form onSubmit={handleSubmit} autoComplete="on">
+              {/* Full Name */}
               <div className="mb-3">
-                <label className="form-label required">Nama Lengkap</label>
+                <label className="form-label fw-semibold text-dark">
+                  Nama Lengkap <span className="text-danger">*</span>
+                </label>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text">
+                  <span className="input-group-text bg-white border-end-0">
                     <IconUser size={18} className="text-muted" />
                   </span>
                   <input
                     type="text"
                     name="full_name"
                     required
-                    className="form-control"
+                    className="form-control ps-1"
                     placeholder="Contoh: Budi Santoso"
                     autoComplete="name"
                   />
                 </div>
               </div>
 
+              {/* Phone / WhatsApp */}
               <div className="mb-3">
-                <label className="form-label">Nomor WhatsApp (Opsional)</label>
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <label className="form-label fw-semibold text-dark m-0">
+                    Nomor WhatsApp / HP
+                  </label>
+                  <span className="text-muted small" style={{ fontSize: "11px" }}>Opsional</span>
+                </div>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text">
+                  <span className="input-group-text bg-white border-end-0">
                     <IconPhone size={18} className="text-muted" />
                   </span>
                   <input
                     type="tel"
                     name="phone_number"
-                    className="form-control"
+                    className="form-control ps-1"
                     placeholder="Contoh: 081234567890"
                     autoComplete="tel"
                   />
                 </div>
+                <div className="form-text text-muted" style={{ fontSize: "11px" }}>
+                  Berguna agar teman sekamar dapat menghubungi Anda terkait iuran.
+                </div>
               </div>
 
+              {/* Email Address */}
               <div className="mb-3">
-                <label className="form-label required">Alamat Email</label>
+                <label className="form-label fw-semibold text-dark">
+                  Alamat Email <span className="text-danger">*</span>
+                </label>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text">
+                  <span className="input-group-text bg-white border-end-0">
                     <IconMail size={18} className="text-muted" />
                   </span>
                   <input
                     type="email"
                     name="email"
                     required
-                    className="form-control"
+                    className="form-control ps-1"
                     placeholder="nama@email.com"
                     autoComplete="email"
                   />
                 </div>
               </div>
 
+              {/* Password */}
               <div className="mb-4">
-                <label className="form-label required">Kata Sandi</label>
+                <label className="form-label fw-semibold text-dark">
+                  Kata Sandi <span className="text-danger">*</span>
+                </label>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text">
+                  <span className="input-group-text bg-white border-end-0">
                     <IconLock size={18} className="text-muted" />
                   </span>
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     name="password"
                     required
-                    className="form-control"
+                    minLength={6}
+                    className="form-control ps-1"
                     placeholder="Minimal 6 karakter"
                     autoComplete="new-password"
                   />
+                  <span className="input-group-text bg-white border-start-0 pe-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="btn btn-link link-secondary p-0 text-muted"
+                      title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                    >
+                      {showPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+                    </button>
+                  </span>
                 </div>
               </div>
 
-              <div className="form-footer">
+              {/* Submit Button */}
+              <div className="form-footer mt-4">
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="btn btn-teal w-100 d-flex align-items-center justify-content-center gap-2"
+                  className="btn btn-teal w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold shadow-sm"
                 >
                   {isLoading ? (
-                    <span>Mendaftarkan...</span>
+                    <>
+                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      <span>Mendaftarkan Akun Anda...</span>
+                    </>
                   ) : (
                     <>
-                      <span>Daftar Sekarang — Gratis</span>
+                      <span>Daftar Sekarang — 100% Gratis</span>
                       <IconArrowRight size={18} />
                     </>
                   )}
@@ -151,12 +212,24 @@ export default function RegisterPage() {
               </div>
             </form>
           </div>
+
+          <div className="card-footer bg-light border-top py-3 text-center small text-muted">
+            Sudah punya akun sebelumnya?{" "}
+            <Link href="/login" className="text-teal fw-bold text-decoration-none">
+              Masuk di sini
+            </Link>
+          </div>
         </div>
 
-        <div className="text-center text-muted mt-3">
-          Sudah punya akun?{" "}
-          <Link href="/login" className="text-teal fw-semibold">
-            Masuk di sini
+        {/* Security badge & back link */}
+        <div className="d-flex flex-column align-items-center gap-2 mt-4 text-center">
+          <div className="text-muted small d-flex align-items-center gap-1">
+            <IconShieldLock size={16} className="text-teal" />
+            <span>Data Anda terlindungi & tidak dibagikan ke pihak ketiga</span>
+          </div>
+          <Link href="/" className="text-secondary small d-inline-flex align-items-center gap-1 text-decoration-none mt-1 hover-teal">
+            <IconArrowLeft size={16} />
+            <span>Kembali ke Halaman Utama</span>
           </Link>
         </div>
       </div>
