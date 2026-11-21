@@ -1,6 +1,7 @@
 import { getCurrentUserProfile, signOutAction } from "@/app/actions/auth";
 import Link from "next/link";
 import { IconWallet, IconUser, IconLogout } from "@tabler/icons-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default async function DashboardLayout({
   children,
@@ -24,6 +25,8 @@ export default async function DashboardLayout({
           </Link>
 
           <div className="navbar-nav flex-row order-md-last align-items-center gap-3">
+            <ThemeToggle />
+
             <div className="d-flex align-items-center gap-2">
               <span className="avatar avatar-sm bg-green-lt rounded-circle">
                 <IconUser size={18} />

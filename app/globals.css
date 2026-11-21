@@ -9,6 +9,11 @@
 
 body {
   font-family: var(--tblr-font-sans-serif);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Light mode defaults */
+body.bg-light {
   background-color: #f8fafc;
   color: #1e293b;
 }
@@ -44,5 +49,121 @@ body {
 
 .card {
   border-radius: 0.75rem;
-  border-color: #e2e8f0;
+}
+
+/* ==============================================================================
+   DARK MODE ENHANCEMENTS (Tabler Compatible)
+   ============================================================================== */
+[data-bs-theme="dark"],
+.theme-dark {
+  --tblr-body-bg: #0f172a;
+  --tblr-body-color: #f8fafc;
+  --tblr-card-bg: #1e293b;
+  --tblr-card-border-color: #334155;
+  color-scheme: dark;
+}
+
+[data-bs-theme="dark"] body,
+body.theme-dark {
+  background-color: #0f172a !important;
+  color: #f8fafc;
+}
+
+[data-bs-theme="dark"] .page,
+.theme-dark .page {
+  background-color: #0f172a !important;
+}
+
+[data-bs-theme="dark"] .bg-white,
+.theme-dark .bg-white {
+  background-color: #1e293b !important;
+  color: #f8fafc;
+}
+
+[data-bs-theme="dark"] .bg-light,
+.theme-dark .bg-light {
+  background-color: #0f172a !important;
+}
+
+[data-bs-theme="dark"] .card,
+.theme-dark .card {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc;
+}
+
+[data-bs-theme="dark"] .navbar,
+.theme-dark .navbar {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .modal-content,
+.theme-dark .modal-content {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .modal-header,
+[data-bs-theme="dark"] .modal-footer,
+.theme-dark .modal-header,
+.theme-dark .modal-footer {
+  border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .table,
+.theme-dark .table {
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .table > :not(caption) > * > *,
+.theme-dark .table > :not(caption) > * > * {
+  border-bottom-color: #334155 !important;
+  color: #f8fafc;
+}
+
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select,
+.theme-dark .form-control,
+.theme-dark .form-select {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .form-control:focus,
+[data-bs-theme="dark"] .form-select:focus,
+.theme-dark .form-control:focus,
+.theme-dark .form-select:focus {
+  background-color: #0f172a !important;
+  border-color: #0ca678 !important;
+  color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .text-dark,
+.theme-dark .text-dark {
+  color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .border-bottom,
+[data-bs-theme="dark"] .border-top,
+[data-bs-theme="dark"] .border,
+.theme-dark .border-bottom,
+.theme-dark .border-top,
+.theme-dark .border {
+  border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .text-secondary,
+[data-bs-theme="dark"] .text-muted,
+.theme-dark .text-secondary,
+.theme-dark .text-muted {
+  color: #94a3b8 !important;
+}
+
+[data-bs-theme="dark"] .card-table tr td,
+.theme-dark .card-table tr td {
+  border-color: #334155 !important;
 }
