@@ -1,14 +1,16 @@
 @import "@tabler/core/dist/css/tabler.min.css";
 
-/* Custom utility & layout adjustments */
+/* Custom theme variables and Tabler foundation for KasKos */
 :root {
+  --tblr-font-sans-serif: var(--font-inter), -apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   --tblr-primary: #0ca678;
   --tblr-primary-rgb: 12, 166, 120;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  font-family: var(--tblr-font-sans-serif);
   background-color: #f8fafc;
+  color: #1e293b;
 }
 
 .brand-emerald {
@@ -17,4 +19,30 @@ body {
 
 .bg-brand-emerald {
   background-color: #0ca678;
+}
+
+/* Tabler style enhancements for KasKos */
+.text-teal {
+  color: #0ca678 !important;
+}
+
+.bg-teal {
+  background-color: #0ca678 !important;
+}
+
+.btn-teal {
+  background-color: #0ca678;
+  border-color: #0ca678;
+  color: #ffffff;
+}
+
+.btn-teal:hover {
+  background-color: #099268;
+  border-color: #099268;
+  color: #ffffff;
+}
+
+.card {
+  border-radius: 0.75rem;
+  border-color: #e2e8f0;
 }
