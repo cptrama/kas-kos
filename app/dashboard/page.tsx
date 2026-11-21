@@ -4,10 +4,11 @@ import { getGroupFinancialStats, getGroupExpenses } from "@/app/actions/expense"
 import GroupModals from "@/components/dashboard/GroupModals";
 import CoordinatorStatCards from "@/components/dashboard/CoordinatorStatCards";
 import ExpenseSection from "@/components/dashboard/ExpenseSection";
+import MemberPersonalAlert, { PersonalBillSummary } from "@/components/dashboard/MemberPersonalAlert";
+import PaymentAccountCard from "@/components/dashboard/PaymentAccountCard";
 import {
   IconBuildingCommunity,
   IconUsers,
-  IconCreditCard,
   IconShield,
   IconUser,
 } from "@tabler/icons-react";
@@ -25,6 +26,27 @@ export default async function DashboardPage() {
   const members = activeGroup ? await getGroupMembers(activeGroup.id) : [];
   const financialStats = activeGroup ? await getGroupFinancialStats(activeGroup.id) : null;
   const expenses = activeGroup ? await getGroupExpenses(activeGroup.id) : [];
+
+  // [TASK-13] Ekstraksi porsi tagihan kas pribadi untuk anggota yang sedang login
+  const currentUserId = profile?.id;
+  const userBills: PersonalBillSummary[] =
+    currentUserId && expenses
+      ? expenses.flatMap((exp) => {
+          const myItem = exp.billItems.find((b) => b.userId === currentUserId);
+          if (!myItem) return [];
+          return [
+            {
+              billItemId: myItem.id,
+              expenseId: exp.id,
+              expenseTitle: exp.title,
+              category: exp.category,
+              splitAmount: myItem.splitAmount,
+              status: myItem.status,
+              dueDate: exp.dueDate,
+            },
+          ];
+        })
+      : [];
 
   return (
     <div>
@@ -63,9 +85,15 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Jika sudah ada grup: Tampilkan Quick Actions, Stat Cards, Data Table Pengeluaran, Info Rekening & Anggota */}
+      {/* Jika sudah ada grup: Tampilkan Alert Tagihan Pribadi, Stat Cards, Data Table Pengeluaran, Info Rekening & Anggota */}
       {activeGroup && (
         <>
+          {/* [TASK-13] Alert Box Tagihan Pribadi Anggota Kos */}
+          <MemberPersonalAlert
+            userName={profile?.full_name || "Anak Kos"}
+            bills={userBills}
+          />
+
           {/* 3 Stat Cards Tabler UI: Total Kas Terkumpul, Sisa Tunggakan, Jumlah Anggota Aktif */}
           {financialStats && <CoordinatorStatCards stats={financialStats} />}
 
@@ -78,41 +106,14 @@ export default async function DashboardPage() {
           />
 
           <div className="row row-cards">
-            {/* Rekening Tujuan Pembayaran */}
+            {/* [TASK-13] Rekening Kas Tujuan dengan Tombol Interaktif 1-Klik Salin Nomor Rekening */}
             <div className="col-md-5">
-              <div className="card shadow-sm border-0 h-100">
-                <div className="card-status-top bg-teal"></div>
-                <div className="card-body p-4">
-                  <div className="d-flex align-items-center gap-2 mb-3">
-                    <span className="badge bg-teal-lt p-2 rounded-circle">
-                      <IconCreditCard size={20} />
-                    </span>
-                    <h3 className="card-title m-0 fw-bold">Rekening Kas Tujuan</h3>
-                  </div>
-
-                  {activeGroup.payment_bank ? (
-                    <div className="bg-light p-3 rounded border">
-                      <div className="text-muted small">Metode Pembayaran:</div>
-                      <div className="fs-3 fw-bold text-dark">{activeGroup.payment_bank}</div>
-
-                      <div className="text-muted small mt-2">Nomor Rekening / No. HP:</div>
-                      <div className="fs-2 fw-extrabold text-teal">{activeGroup.payment_account_number}</div>
-
-                      <div className="text-muted small mt-2">Atas Nama:</div>
-                      <div className="fw-semibold text-dark">{activeGroup.payment_holder_name}</div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-4 bg-light rounded border border-dashed">
-                      <p className="text-muted small mb-2">Belum ada informasi rekening kas.</p>
-                      {isAdmin && (
-                        <p className="small text-teal fw-semibold mb-0">
-                          Klik tombol &quot;Atur Rekening Kas&quot; di atas untuk mengisi.
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <PaymentAccountCard
+                paymentBank={activeGroup.payment_bank}
+                paymentAccountNumber={activeGroup.payment_account_number}
+                paymentHolderName={activeGroup.payment_holder_name}
+                isAdmin={isAdmin}
+              />
             </div>
 
             {/* Daftar Anggota Kos */}
