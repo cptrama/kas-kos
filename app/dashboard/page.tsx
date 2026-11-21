@@ -1,6 +1,9 @@
 import { getCurrentUserProfile } from "@/app/actions/auth";
 import { getUserGroups, getGroupMembers } from "@/app/actions/group";
+import { getGroupFinancialStats } from "@/app/actions/expense";
 import GroupModals from "@/components/dashboard/GroupModals";
+import CoordinatorStatCards from "@/components/dashboard/CoordinatorStatCards";
+import CoordinatorQuickActions from "@/components/dashboard/CoordinatorQuickActions";
 import {
   IconBuildingCommunity,
   IconUsers,
@@ -18,8 +21,9 @@ export default async function DashboardPage() {
   const activeGroup = activeGroupData?.group || null;
   const isAdmin = activeGroupData?.role === "admin_grup";
 
-  // Ambil daftar anggota jika sudah punya grup
+  // Ambil daftar anggota dan ringkasan keuangan kas jika sudah punya grup
   const members = activeGroup ? await getGroupMembers(activeGroup.id) : [];
+  const financialStats = activeGroup ? await getGroupFinancialStats(activeGroup.id) : null;
 
   return (
     <div>
@@ -58,102 +62,114 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Jika sudah ada grup: Tampilkan Info Pembayaran & Anggota */}
+      {/* Jika sudah ada grup: Tampilkan Quick Actions, Stat Cards, Info Rekening & Anggota */}
       {activeGroup && (
-        <div className="row row-cards">
-          {/* Rekening Tujuan Pembayaran */}
-          <div className="col-md-5">
-            <div className="card shadow-sm border-0 h-100">
-              <div className="card-status-top bg-teal"></div>
-              <div className="card-body p-4">
-                <div className="d-flex align-items-center gap-2 mb-3">
-                  <span className="badge bg-teal-lt p-2 rounded-circle">
-                    <IconCreditCard size={20} />
-                  </span>
-                  <h3 className="card-title m-0 fw-bold">Rekening Kas Tujuan</h3>
-                </div>
+        <>
+          {/* Quick Actions (Buat Tagihan Baru & Salin Kode Invite) */}
+          <CoordinatorQuickActions
+            inviteCode={activeGroup.invite_code}
+            groupName={activeGroup.group_name}
+            isAdmin={isAdmin}
+          />
 
-                {activeGroup.payment_bank ? (
-                  <div className="bg-light p-3 rounded border">
-                    <div className="text-muted small">Metode Pembayaran:</div>
-                    <div className="fs-3 fw-bold text-dark">{activeGroup.payment_bank}</div>
+          {/* 3 Stat Cards Tabler UI: Total Kas Terkumpul, Sisa Tunggakan, Jumlah Anggota Aktif */}
+          {financialStats && <CoordinatorStatCards stats={financialStats} />}
 
-                    <div className="text-muted small mt-2">Nomor Rekening / No. HP:</div>
-                    <div className="fs-2 fw-extrabold text-teal">{activeGroup.payment_account_number}</div>
-
-                    <div className="text-muted small mt-2">Atas Nama:</div>
-                    <div className="fw-semibold text-dark">{activeGroup.payment_holder_name}</div>
-                  </div>
-                ) : (
-                  <div className="text-center py-4 bg-light rounded border border-dashed">
-                    <p className="text-muted small mb-2">Belum ada informasi rekening kas.</p>
-                    {isAdmin && (
-                      <p className="small text-teal fw-semibold mb-0">
-                        Klik tombol &quot;Atur Rekening Kas&quot; di atas untuk mengisi.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Daftar Anggota Kos */}
-          <div className="col-md-7">
-            <div className="card shadow-sm border-0 h-100">
-              <div className="card-body p-4">
-                <div className="d-flex align-items-center justify-content-between mb-3">
-                  <div className="d-flex align-items-center gap-2">
-                    <span className="badge bg-green-lt p-2 rounded-circle">
-                      <IconUsers size={20} />
+          <div className="row row-cards">
+            {/* Rekening Tujuan Pembayaran */}
+            <div className="col-md-5">
+              <div className="card shadow-sm border-0 h-100">
+                <div className="card-status-top bg-teal"></div>
+                <div className="card-body p-4">
+                  <div className="d-flex align-items-center gap-2 mb-3">
+                    <span className="badge bg-teal-lt p-2 rounded-circle">
+                      <IconCreditCard size={20} />
                     </span>
-                    <h3 className="card-title m-0 fw-bold">Penghuni Kos ({members.length})</h3>
+                    <h3 className="card-title m-0 fw-bold">Rekening Kas Tujuan</h3>
                   </div>
-                </div>
 
-                <div className="table-responsive">
-                  <table className="table table-vcenter table-hover">
-                    <thead>
-                      <tr>
-                        <th>Nama Penghuni</th>
-                        <th>Kontak</th>
-                        <th>Peran</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {members.map((m: any) => (
-                        <tr key={m.id}>
-                          <td>
-                            <div className="d-flex align-items-center gap-2">
-                              <span className="avatar avatar-sm bg-light rounded-circle">
-                                <IconUser size={16} />
-                              </span>
-                              <div className="fw-semibold text-dark">
-                                {m.profile?.full_name || "Anggota"}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="text-muted small">
-                            {m.profile?.phone_number || "-"}
-                          </td>
-                          <td>
-                            {m.role === "admin_grup" ? (
-                              <span className="badge bg-teal-lt d-inline-flex align-items-center gap-1">
-                                <IconShield size={12} /> Koordinator
-                              </span>
-                            ) : (
-                              <span className="badge bg-secondary-lt">Anggota</span>
-                            )}
-                          </td>
+                  {activeGroup.payment_bank ? (
+                    <div className="bg-light p-3 rounded border">
+                      <div className="text-muted small">Metode Pembayaran:</div>
+                      <div className="fs-3 fw-bold text-dark">{activeGroup.payment_bank}</div>
+
+                      <div className="text-muted small mt-2">Nomor Rekening / No. HP:</div>
+                      <div className="fs-2 fw-extrabold text-teal">{activeGroup.payment_account_number}</div>
+
+                      <div className="text-muted small mt-2">Atas Nama:</div>
+                      <div className="fw-semibold text-dark">{activeGroup.payment_holder_name}</div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 bg-light rounded border border-dashed">
+                      <p className="text-muted small mb-2">Belum ada informasi rekening kas.</p>
+                      {isAdmin && (
+                        <p className="small text-teal fw-semibold mb-0">
+                          Klik tombol &quot;Atur Rekening Kas&quot; di atas untuk mengisi.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Daftar Anggota Kos */}
+            <div className="col-md-7">
+              <div className="card shadow-sm border-0 h-100">
+                <div className="card-body p-4">
+                  <div className="d-flex align-items-center justify-content-between mb-3">
+                    <div className="d-flex align-items-center gap-2">
+                      <span className="badge bg-green-lt p-2 rounded-circle">
+                        <IconUsers size={20} />
+                      </span>
+                      <h3 className="card-title m-0 fw-bold">Penghuni Kos ({members.length})</h3>
+                    </div>
+                  </div>
+
+                  <div className="table-responsive">
+                    <table className="table table-vcenter table-hover">
+                      <thead>
+                        <tr>
+                          <th>Nama Penghuni</th>
+                          <th>Kontak</th>
+                          <th>Peran</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {members.map((m: any) => (
+                          <tr key={m.id}>
+                            <td>
+                              <div className="d-flex align-items-center gap-2">
+                                <span className="avatar avatar-sm bg-light rounded-circle">
+                                  <IconUser size={16} />
+                                </span>
+                                <div className="fw-semibold text-dark">
+                                  {m.profile?.full_name || "Anggota"}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="text-muted small">
+                              {m.profile?.phone_number || "-"}
+                            </td>
+                            <td>
+                              {m.role === "admin_grup" ? (
+                                <span className="badge bg-teal-lt d-inline-flex align-items-center gap-1">
+                                  <IconShield size={12} /> Koordinator
+                                </span>
+                              ) : (
+                                <span className="badge bg-secondary-lt">Anggota</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
