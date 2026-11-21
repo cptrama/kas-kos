@@ -1,59 +1,160 @@
 import { getCurrentUserProfile } from "@/app/actions/auth";
-import { IconPlus, IconDoorEnter } from "@tabler/icons-react";
+import { getUserGroups, getGroupMembers } from "@/app/actions/group";
+import GroupModals from "@/components/dashboard/GroupModals";
+import {
+  IconBuildingCommunity,
+  IconUsers,
+  IconCreditCard,
+  IconShield,
+  IconUser,
+} from "@tabler/icons-react";
 
 export default async function DashboardPage() {
   const profile = await getCurrentUserProfile();
+  const userGroups = await getUserGroups();
+
+  // Ambil grup pertama sebagai grup aktif
+  const activeGroupData = userGroups.length > 0 ? userGroups[0] : null;
+  const activeGroup = activeGroupData?.group || null;
+  const isAdmin = activeGroupData?.role === "admin_grup";
+
+  // Ambil daftar anggota jika sudah punya grup
+  const members = activeGroup ? await getGroupMembers(activeGroup.id) : [];
 
   return (
     <div>
+      {/* Page Header */}
       <div className="page-header mb-4">
         <div className="row align-items-center">
           <div className="col">
-            <div className="page-pretitle text-muted">Selamat Datang</div>
-            <h2 className="page-title text-dark fw-bold">Halo, {profile?.full_name || "Anak Kos"}! 👋</h2>
+            <div className="page-pretitle text-muted">Workspace Kas Kos</div>
+            <h2 className="page-title text-dark fw-bold">
+              {activeGroup ? activeGroup.group_name : `Halo, ${profile?.full_name || "Anak Kos"}! 👋`}
+            </h2>
             <p className="text-secondary mt-1">
-              Akun Anda berhasil terautentikasi melalui Supabase Auth.
+              {activeGroup
+                ? activeGroup.description || "Kelola pengeluaran bersama kamar kos tanpa drama."
+                : "Anda belum tergabung dalam grup kos mana pun. Buat grup baru atau minta kode undangan dari teman kos Anda."}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Workspace Card */}
-      <div className="row row-cards">
-        <div className="col-md-6">
-          <div className="card shadow-sm border-0 h-100">
-            <div className="card-body p-4 text-center">
-              <div className="avatar avatar-xl bg-green-lt rounded-circle mx-auto mb-3">
-                <IconPlus size={32} />
-              </div>
-              <h3 className="card-title fw-bold">Buat Grup Kamar Kos Baru</h3>
-              <p className="text-secondary">
-                Apakah Anda koordinator / bendahara kontrakan? Buat kamar kos baru dan undang roommate Anda dengan kode unik 6-digit.
-              </p>
-              <button className="btn btn-teal mt-2" disabled>
-                + Buat Grup Kos (Segera Hadir di Task-04)
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Modal Controls (Create, Join, Settings) */}
+      <GroupModals activeGroup={activeGroup} isAdmin={isAdmin} />
 
-        <div className="col-md-6">
-          <div className="card shadow-sm border-0 h-100">
-            <div className="card-body p-4 text-center">
-              <div className="avatar avatar-xl bg-blue-lt rounded-circle mx-auto mb-3">
-                <IconDoorEnter size={32} />
+      {/* Jika belum ada grup: Empty State */}
+      {!activeGroup && (
+        <div className="card shadow-sm border-0 text-center py-6">
+          <div className="card-body">
+            <div className="avatar avatar-xl bg-teal-lt rounded-circle mx-auto mb-3">
+              <IconBuildingCommunity size={36} />
+            </div>
+            <h3 className="fw-bold">Belum Ada Kamar Kos Aktif</h3>
+            <p className="text-muted mx-auto" style={{ maxWidth: "480px" }}>
+              Mulai kelola kas dengan membuat kamar kos baru (jika Anda bendahara) atau masukkan 6-digit kode invite dari teman Anda.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Jika sudah ada grup: Tampilkan Info Pembayaran & Anggota */}
+      {activeGroup && (
+        <div className="row row-cards">
+          {/* Rekening Tujuan Pembayaran */}
+          <div className="col-md-5">
+            <div className="card shadow-sm border-0 h-100">
+              <div className="card-status-top bg-teal"></div>
+              <div className="card-body p-4">
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <span className="badge bg-teal-lt p-2 rounded-circle">
+                    <IconCreditCard size={20} />
+                  </span>
+                  <h3 className="card-title m-0 fw-bold">Rekening Kas Tujuan</h3>
+                </div>
+
+                {activeGroup.payment_bank ? (
+                  <div className="bg-light p-3 rounded border">
+                    <div className="text-muted small">Metode Pembayaran:</div>
+                    <div className="fs-3 fw-bold text-dark">{activeGroup.payment_bank}</div>
+
+                    <div className="text-muted small mt-2">Nomor Rekening / No. HP:</div>
+                    <div className="fs-2 fw-extrabold text-teal">{activeGroup.payment_account_number}</div>
+
+                    <div className="text-muted small mt-2">Atas Nama:</div>
+                    <div className="fw-semibold text-dark">{activeGroup.payment_holder_name}</div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4 bg-light rounded border border-dashed">
+                    <p className="text-muted small mb-2">Belum ada informasi rekening kas.</p>
+                    {isAdmin && (
+                      <p className="small text-teal fw-semibold mb-0">
+                        Klik tombol &quot;Atur Rekening Kas&quot; di atas untuk mengisi.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
-              <h3 className="card-title fw-bold">Gabung ke Grup Kos</h3>
-              <p className="text-secondary">
-                Sudah punya kode 6-digit dari teman kos? Masukkan kode untuk langsung bergabung dan melihat tagihan patungan Anda.
-              </p>
-              <button className="btn btn-outline-secondary mt-2" disabled>
-                Gabung dengan Kode (Segera Hadir di Task-04)
-              </button>
+            </div>
+          </div>
+
+          {/* Daftar Anggota Kos */}
+          <div className="col-md-7">
+            <div className="card shadow-sm border-0 h-100">
+              <div className="card-body p-4">
+                <div className="d-flex align-items-center justify-content-between mb-3">
+                  <div className="d-flex align-items-center gap-2">
+                    <span className="badge bg-green-lt p-2 rounded-circle">
+                      <IconUsers size={20} />
+                    </span>
+                    <h3 className="card-title m-0 fw-bold">Penghuni Kos ({members.length})</h3>
+                  </div>
+                </div>
+
+                <div className="table-responsive">
+                  <table className="table table-vcenter table-hover">
+                    <thead>
+                      <tr>
+                        <th>Nama Penghuni</th>
+                        <th>Kontak</th>
+                        <th>Peran</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {members.map((m: any) => (
+                        <tr key={m.id}>
+                          <td>
+                            <div className="d-flex align-items-center gap-2">
+                              <span className="avatar avatar-sm bg-light rounded-circle">
+                                <IconUser size={16} />
+                              </span>
+                              <div className="fw-semibold text-dark">
+                                {m.profile?.full_name || "Anggota"}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="text-muted small">
+                            {m.profile?.phone_number || "-"}
+                          </td>
+                          <td>
+                            {m.role === "admin_grup" ? (
+                              <span className="badge bg-teal-lt d-inline-flex align-items-center gap-1">
+                                <IconShield size={12} /> Koordinator
+                              </span>
+                            ) : (
+                              <span className="badge bg-secondary-lt">Anggota</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
