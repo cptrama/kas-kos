@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ExpenseWithItems, deleteExpenseAction } from "@/app/actions/expense";
 import { formatRupiah, formatDateIndo } from "@/lib/utils";
 import PaymentProofModal, { PaymentProofModalItem } from "@/components/dashboard/PaymentProofModal";
+import UploadProofModal, { UploadProofModalItem } from "@/components/dashboard/UploadProofModal";
 import {
   IconBolt,
   IconWifi,
@@ -23,23 +24,27 @@ import {
   IconUser,
   IconShieldCheck,
   IconPhoto,
+  IconUpload,
 } from "@tabler/icons-react";
 
 interface ExpenseTableProps {
   expenses: ExpenseWithItems[];
   isAdmin: boolean;
+  currentUserId?: string | null;
   onOpenCreateModal: () => void;
 }
 
 export default function ExpenseTable({
   expenses,
   isAdmin,
+  currentUserId,
   onOpenCreateModal,
 }: ExpenseTableProps) {
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "waiting" | "paid">("all");
   const [expandedExpenseId, setExpandedExpenseId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedProofItem, setSelectedProofItem] = useState<PaymentProofModalItem | null>(null);
+  const [selectedUploadItem, setSelectedUploadItem] = useState<UploadProofModalItem | null>(null);
 
   // Helper Ikon Kategori
   function getCategoryInfo(category: string) {
@@ -427,6 +432,21 @@ export default function ExpenseTable({
                                 <IconPhoto size={15} />
                                 <span>Lihat Bukti Transfer</span>
                               </button>
+                            ) : item.status === "pending" && currentUserId && item.userId === currentUserId ? (
+                              <button
+                                type="button"
+                                className="btn btn-teal btn-sm w-100 d-flex align-items-center justify-content-center gap-1 shadow-xs fw-semibold"
+                                onClick={() =>
+                                  setSelectedUploadItem({
+                                    id: item.id,
+                                    expenseTitle: exp.title,
+                                    splitAmount: item.splitAmount,
+                                  })
+                                }
+                              >
+                                <IconUpload size={15} />
+                                <span>Upload Bukti Bayar</span>
+                              </button>
                             ) : isAdmin && item.status === "pending" ? (
                               <button
                                 type="button"
@@ -469,6 +489,13 @@ export default function ExpenseTable({
         item={selectedProofItem}
         isAdmin={isAdmin}
         onClose={() => setSelectedProofItem(null)}
+      />
+
+      {/* Modal Konfirmasi Pembayaran & Upload Bukti Transfer Roommate (TASK-14) */}
+      <UploadProofModal
+        isOpen={!!selectedUploadItem}
+        item={selectedUploadItem}
+        onClose={() => setSelectedUploadItem(null)}
       />
     </div>
   );

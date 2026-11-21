@@ -573,3 +573,107 @@ export async function getGroupFinancialStats(groupId: string): Promise<GroupFina
     activeMembersCount,
   };
 }
+
+/**
+ * Server Action: [TASK-14] Mengunggah Bukti Pembayaran ke Supabase Storage & Update Status ke waiting_approval
+ */
+export async function uploadPaymentProofAction(formData: FormData): Promise<ExpenseResponse> {
+  const billItemId = formData.get("bill_item_id")?.toString().trim();
+  const notes = formData.get("notes")?.toString().trim() || "";
+  const file = formData.get("proof_file") as File | null;
+
+  if (!billItemId) {
+    return { success: false, error: "ID porsi tagihan tidak valid." };
+  }
+
+  if (!file || file.size === 0) {
+    return { success: false, error: "Silakan pilih berkas foto / screenshot struk transfer." };
+  }
+
+  // Validasi ukuran berkas (Maksimal 5MB)
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
+  if (file.size > MAX_FILE_SIZE) {
+    return { success: false, error: "Ukuran berkas bukti transfer tidak boleh melebihi 5 MB." };
+  }
+
+  // Validasi format berkas gambar
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+  if (!allowedTypes.includes(file.type)) {
+    return { success: false, error: "Format berkas harus berupa gambar (JPG, JPEG, PNG, atau WEBP)." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Sesi telah berakhir. Silakan login kembali." };
+  }
+
+  // Cek apakah bill_item ini milik user yang sedang login
+  const { data: billItem, error: fetchErr } = await supabase
+    .from("bill_items")
+    .select("id, user_id, split_amount")
+    .eq("id", billItemId)
+    .single();
+
+  if (fetchErr || !billItem) {
+    return { success: false, error: "Data tagihan tidak ditemukan." };
+  }
+
+  if (billItem.user_id !== user.id) {
+    return { success: false, error: "Anda hanya dapat mengunggah bukti bayar untuk tagihan milik Anda sendiri." };
+  }
+
+  // Buat nama berkas unik
+  const fileExt = file.name.split(".").pop() || "jpg";
+  const sanitizedName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+  const filePath = `proofs/${user.id}/${sanitizedName}`;
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Upload ke bucket transfer-proofs di Supabase Storage
+    const { error: uploadError } = await supabase.storage
+      .from("transfer-proofs")
+      .upload(filePath, buffer, {
+        contentType: file.type,
+        upsert: true,
+      });
+
+    if (uploadError) {
+      return { success: false, error: `Gagal mengunggah foto ke storage: ${uploadError.message}` };
+    }
+
+    // Dapatkan URL Publik bukti transfer
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("transfer-proofs").getPublicUrl(filePath);
+
+    // Update status baris bill_items menjadi waiting_approval
+    const { error: updateError } = await supabase
+      .from("bill_items")
+      .update({
+        status: "waiting_approval",
+        proof_image_url: publicUrl,
+        notes: notes || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", billItemId);
+
+    if (updateError) {
+      return { success: false, error: `Gagal memperbarui status tagihan: ${updateError.message}` };
+    }
+
+    revalidatePath("/dashboard", "layout");
+    return {
+      success: true,
+      message: `Bukti transfer sebesar Rp ${Number(billItem.split_amount).toLocaleString("id-ID")} berhasil diunggah! Menunggu konfirmasi bendahara.`,
+    };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Terjadi kesalahan internal saat memproses berkas bukti transfer." };
+  }
+}
+

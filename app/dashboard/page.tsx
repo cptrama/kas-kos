@@ -103,6 +103,7 @@ export default async function DashboardPage() {
             isAdmin={isAdmin}
             memberCount={members.length}
             initialExpenses={expenses}
+            currentUserId={currentUserId}
           />
 
           <div className="row row-cards">

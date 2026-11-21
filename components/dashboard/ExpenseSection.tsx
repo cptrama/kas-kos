@@ -15,6 +15,7 @@ interface ExpenseSectionProps {
   isAdmin: boolean;
   memberCount: number;
   initialExpenses: ExpenseWithItems[];
+  currentUserId?: string | null;
 }
 
 export default function ExpenseSection({
@@ -22,6 +23,7 @@ export default function ExpenseSection({
   isAdmin,
   memberCount,
   initialExpenses,
+  currentUserId,
 }: ExpenseSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -47,6 +49,7 @@ export default function ExpenseSection({
       <ExpenseTable
         expenses={initialExpenses}
         isAdmin={isAdmin}
+        currentUserId={currentUserId}
         onOpenCreateModal={() => setIsModalOpen(true)}
       />
     </>
