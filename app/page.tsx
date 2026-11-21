@@ -1,5 +1,4 @@
 import Link from "next/link";
-import ThemeToggle from "@/components/ThemeToggle";
 import {
   IconBolt,
   IconWifi,
@@ -24,7 +23,7 @@ import {
 
 export default function HomePage() {
   return (
-    <div className="page bg-white">
+    <div className="page bg-white" data-bs-theme="light">
       {/* Top Navigation */}
       <header className="navbar navbar-expand-md navbar-light sticky-top bg-white border-bottom shadow-xs">
         <div className="container-xl">
@@ -53,7 +52,6 @@ export default function HomePage() {
           </div>
 
           <div className="navbar-nav flex-row order-md-last align-items-center gap-2">
-            <ThemeToggle />
             <Link href="/login" className="btn btn-outline-secondary px-3">
               Masuk
             </Link>
