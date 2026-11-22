@@ -43,6 +43,13 @@ export async function signUpAction(formData: FormData): Promise<AuthResponse> {
   });
 
   if (error) {
+    if (error.message.toLowerCase().includes("rate limit")) {
+      return {
+        success: false,
+        error:
+          "Batas pengiriman email verifikasi dari server Supabase telah tercapai untuk jam ini (maksimal 3-4 email per jam pada akun gratis). Untuk pengujian leluasa, Anda dapat menonaktifkan opsi 'Confirm email' di Supabase Dashboard -> Authentication -> Providers -> Email.",
+      };
+    }
     return { success: false, error: error.message };
   }
 
