@@ -164,31 +164,54 @@ textarea:-webkit-autofill {
   transition: background-color 9999999s ease-in-out 0s, color 9999999s ease-in-out 0s !important;
 }
 
-/* Seamless Unified Input Group (Tidak ada sekat atau beda background) */
+/* Seamless Unified Input Group (Tidak ada sekat, border vertikal, atau beda background) */
 .input-group-flat {
-  background-color: #ffffff;
-  border: 1px solid #dce1e7;
+  background-color: #ffffff !important;
+  border: 1px solid #dce1e7 !important;
   border-radius: 8px !important;
   overflow: hidden;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
-.input-group-flat .form-control {
-  background-color: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding-left: 0.5rem;
-}
-
-.input-group-flat .input-group-text {
-  background-color: transparent !important;
-  border: none !important;
-  color: #64748b;
+.input-group-flat:hover {
+  border-color: #94a3b8 !important;
 }
 
 .input-group-flat:focus-within {
   border-color: #0ca678 !important;
-  box-shadow: 0 0 0 3px rgba(12, 166, 120, 0.15) !important;
+  box-shadow: 0 0 0 3px rgba(12, 166, 120, 0.18) !important;
+}
+
+/* Hilangkan secara total garis batas di antara elemen dalam input-group-flat baik saat normal, hover, maupun focus */
+.input-group-flat > *,
+.input-group-flat > *:hover,
+.input-group-flat > *:focus,
+.input-group-flat > *:focus-within,
+.input-group-flat .form-control,
+.input-group-flat .form-control:focus,
+.input-group-flat .form-control:hover,
+.input-group-flat .form-control:active,
+.input-group-flat .input-group-text,
+.input-group-flat .input-group-text:focus,
+.input-group-flat .input-group-text:hover,
+.input-group-flat button,
+.input-group-flat button:focus {
+  border: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background-color: transparent !important;
+}
+
+.input-group-flat .input-group-text {
+  color: #64748b;
+}
+
+.input-group-flat .form-control {
+  padding-left: 0.5rem;
 }
 
 .form-control,
@@ -206,6 +229,17 @@ textarea:-webkit-autofill {
 .theme-dark .input-group-flat {
   background-color: #0f172a !important;
   border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .input-group-flat:hover,
+.theme-dark .input-group-flat:hover {
+  border-color: #475569 !important;
+}
+
+[data-bs-theme="dark"] .input-group-flat:focus-within,
+.theme-dark .input-group-flat:focus-within {
+  border-color: #0ca678 !important;
+  box-shadow: 0 0 0 3px rgba(12, 166, 120, 0.25) !important;
 }
 
 [data-bs-theme="dark"] .input-group-flat .input-group-text,
