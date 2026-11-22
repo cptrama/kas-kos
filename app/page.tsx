@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import BrandLogo from "@/components/BrandLogo";
 import {
   IconBolt,
   IconWifi,
@@ -28,19 +28,7 @@ export default function HomePage() {
       {/* Top Navigation */}
       <header className="navbar navbar-expand-md navbar-light sticky-top bg-white border-bottom shadow-xs">
         <div className="container-xl">
-          <Link href="/" className="navbar-brand d-flex align-items-center gap-2">
-            <Image
-              src="/logo.png"
-              alt="Logo KasKos"
-              width={38}
-              height={38}
-              className="object-fit-contain"
-              priority
-            />
-            <span className="fs-2 fw-bold text-dark">
-              Kas<span className="text-teal">Kos</span>
-            </span>
-          </Link>
+          <BrandLogo href="/" size={44} />
 
           <div className="d-none d-md-flex align-items-center gap-4 mx-auto">
             <a href="#fitur" className="text-secondary text-decoration-none fw-medium hover-teal">
@@ -625,17 +613,8 @@ export default function HomePage() {
         <div className="container-xl">
           <div className="row g-4 align-items-center justify-content-between">
             <div className="col-md-5">
-              <div className="d-flex align-items-center gap-2 mb-2">
-                <Image
-                  src="/logo.png"
-                  alt="Logo KasKos"
-                  width={32}
-                  height={32}
-                  className="object-fit-contain"
-                />
-                <span className="fs-2 fw-bold text-white">
-                  Kas<span className="text-teal">Kos</span>
-                </span>
+              <div className="mb-2">
+                <BrandLogo href="/" size={38} isLightText={true} />
               </div>
               <p className="text-muted small mb-0" style={{ maxWidth: "380px" }}>
                 Platform SaaS pengelolaan iuran dan pengeluaran bersama kamar kos & kontrakan mahasiswa di Indonesia.

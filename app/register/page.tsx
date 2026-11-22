@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import BrandLogo from "@/components/BrandLogo";
 import { signUpAction } from "@/app/actions/auth";
 import {
   IconWallet,
@@ -54,19 +54,9 @@ export default function RegisterPage() {
       <div className="container container-tight py-4" style={{ maxWidth: "480px" }}>
         {/* Brand Header */}
         <div className="text-center mb-4">
-          <Link href="/" className="navbar-brand d-inline-flex align-items-center gap-2 text-decoration-none">
-            <Image
-              src="/logo.png"
-              alt="Logo KasKos"
-              width={42}
-              height={42}
-              className="object-fit-contain"
-              priority
-            />
-            <span className="fs-1 fw-bold text-dark">
-              Kas<span className="text-teal">Kos</span>
-            </span>
-          </Link>
+          <div className="mb-2">
+            <BrandLogo href="/" size={52} />
+          </div>
           <p className="text-muted small mt-2">
             Mulai kelola uang patungan kos tanpa selisih dan tanpa drama
           </p>

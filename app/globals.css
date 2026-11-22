@@ -26,6 +26,31 @@ body.bg-light {
   background-color: #0ca678;
 }
 
+/* Modern Typography for Brand Logo */
+.brand-logo-text {
+  font-family: var(--tblr-font-sans-serif);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-size: 1.55rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.brand-logo-text .kas-part {
+  color: #0f172a;
+  transition: color 0.2s ease;
+}
+
+.brand-logo-text .kos-part {
+  color: #0ca678;
+}
+
+[data-bs-theme="dark"] .brand-logo-text .kas-part,
+.theme-dark .brand-logo-text .kas-part {
+  color: #f8fafc !important;
+}
+
 /* Tabler style enhancements for KasKos */
 .text-teal {
   color: #0ca678 !important;
