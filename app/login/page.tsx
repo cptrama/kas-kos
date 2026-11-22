@@ -125,7 +125,7 @@ export default function LoginPage() {
                   Alamat Email <span className="text-danger">*</span>
                 </label>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text bg-white border-end-0">
+                  <span className="input-group-text ps-3">
                     <IconMail size={18} className="text-muted" />
                   </span>
                   <input
@@ -134,7 +134,7 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="form-control ps-1"
+                    className="form-control"
                     placeholder="nama@email.com"
                     autoComplete="email"
                   />
@@ -149,7 +149,7 @@ export default function LoginPage() {
                   </label>
                 </div>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text bg-white border-end-0">
+                  <span className="input-group-text ps-3">
                     <IconLock size={18} className="text-muted" />
                   </span>
                   <input
@@ -158,11 +158,11 @@ export default function LoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="form-control ps-1"
+                    className="form-control"
                     placeholder="Masukkan kata sandi akun"
                     autoComplete="current-password"
                   />
-                  <span className="input-group-text bg-white border-start-0 pe-2">
+                  <span className="input-group-text pe-3">
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}

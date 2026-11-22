@@ -108,14 +108,14 @@ export default function RegisterPage() {
                   Nama Lengkap <span className="text-danger">*</span>
                 </label>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text bg-white border-end-0">
+                  <span className="input-group-text ps-3">
                     <IconUser size={18} className="text-muted" />
                   </span>
                   <input
                     type="text"
                     name="full_name"
                     required
-                    className="form-control ps-1"
+                    className="form-control"
                     placeholder="Contoh: Budi Santoso"
                     autoComplete="name"
                   />
@@ -131,13 +131,13 @@ export default function RegisterPage() {
                   <span className="text-muted small" style={{ fontSize: "11px" }}>Opsional</span>
                 </div>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text bg-white border-end-0">
+                  <span className="input-group-text ps-3">
                     <IconPhone size={18} className="text-muted" />
                   </span>
                   <input
                     type="tel"
                     name="phone_number"
-                    className="form-control ps-1"
+                    className="form-control"
                     placeholder="Contoh: 081234567890"
                     autoComplete="tel"
                   />
@@ -153,14 +153,14 @@ export default function RegisterPage() {
                   Alamat Email <span className="text-danger">*</span>
                 </label>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text bg-white border-end-0">
+                  <span className="input-group-text ps-3">
                     <IconMail size={18} className="text-muted" />
                   </span>
                   <input
                     type="email"
                     name="email"
                     required
-                    className="form-control ps-1"
+                    className="form-control"
                     placeholder="nama@email.com"
                     autoComplete="email"
                   />
@@ -173,7 +173,7 @@ export default function RegisterPage() {
                   Kata Sandi <span className="text-danger">*</span>
                 </label>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text bg-white border-end-0">
+                  <span className="input-group-text ps-3">
                     <IconLock size={18} className="text-muted" />
                   </span>
                   <input
@@ -181,11 +181,11 @@ export default function RegisterPage() {
                     name="password"
                     required
                     minLength={6}
-                    className="form-control ps-1"
+                    className="form-control"
                     placeholder="Minimal 6 karakter"
                     autoComplete="new-password"
                   />
-                  <span className="input-group-text bg-white border-start-0 pe-2">
+                  <span className="input-group-text pe-3">
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}

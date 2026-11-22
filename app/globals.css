@@ -149,6 +149,89 @@ body.theme-dark {
   color: #f8fafc;
 }
 
+/* ==============================================================================
+   FORM CONTROLS & SEAMLESS INPUT GROUPS (Pembersihan Background & Autofill)
+   ============================================================================== */
+
+/* Hilangkan background patch/blok autofill bawaan browser (Chrome/Edge/Safari) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active,
+select:-webkit-autofill,
+textarea:-webkit-autofill {
+  -webkit-text-fill-color: inherit !important;
+  transition: background-color 9999999s ease-in-out 0s, color 9999999s ease-in-out 0s !important;
+}
+
+/* Seamless Unified Input Group (Tidak ada sekat atau beda background) */
+.input-group-flat {
+  background-color: #ffffff;
+  border: 1px solid #dce1e7;
+  border-radius: 8px !important;
+  overflow: hidden;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.input-group-flat .form-control {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding-left: 0.5rem;
+}
+
+.input-group-flat .input-group-text {
+  background-color: transparent !important;
+  border: none !important;
+  color: #64748b;
+}
+
+.input-group-flat:focus-within {
+  border-color: #0ca678 !important;
+  box-shadow: 0 0 0 3px rgba(12, 166, 120, 0.15) !important;
+}
+
+.form-control,
+.form-select {
+  border-radius: 8px;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #0ca678 !important;
+  box-shadow: 0 0 0 3px rgba(12, 166, 120, 0.15) !important;
+}
+
+[data-bs-theme="dark"] .input-group-flat,
+.theme-dark .input-group-flat {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .input-group-flat .input-group-text,
+.theme-dark .input-group-flat .input-group-text {
+  color: #94a3b8 !important;
+  background-color: transparent !important;
+}
+
+[data-bs-theme="dark"] input:-webkit-autofill,
+[data-bs-theme="dark"] input:-webkit-autofill:hover, 
+[data-bs-theme="dark"] input:-webkit-autofill:focus, 
+[data-bs-theme="dark"] input:-webkit-autofill:active,
+.theme-dark input:-webkit-autofill,
+.theme-dark input:-webkit-autofill:hover, 
+.theme-dark input:-webkit-autofill:focus, 
+.theme-dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .bg-light,
+.theme-dark .bg-light {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
 [data-bs-theme="dark"] .form-control,
 [data-bs-theme="dark"] .form-select,
 .theme-dark .form-control,

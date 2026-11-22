@@ -268,7 +268,7 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
                     />
                   </div>
                 </div>
-                <div className="modal-footer border-top bg-light">
+                <div className="modal-footer border-top">
                   <button type="button" className="btn btn-secondary" onClick={() => setShowCreate(false)} disabled={isLoading}>
                     Batal
                   </button>
@@ -308,7 +308,7 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
                     </small>
                   </div>
                 </div>
-                <div className="modal-footer border-top bg-light">
+                <div className="modal-footer border-top">
                   <button type="button" className="btn btn-secondary" onClick={() => setShowJoin(false)} disabled={isLoading}>
                     Batal
                   </button>
@@ -371,7 +371,7 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
                     />
                   </div>
                 </div>
-                <div className="modal-footer border-top bg-light">
+                <div className="modal-footer border-top">
                   <button type="button" className="btn btn-secondary" onClick={() => setShowSettings(false)} disabled={isLoading}>
                     Batal
                   </button>
