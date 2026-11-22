@@ -1,8 +1,9 @@
-import { getCurrentUserProfile, signOutAction } from "@/app/actions/auth";
+import { getCurrentUserProfile } from "@/app/actions/auth";
 import Link from "next/link";
-import { IconUser, IconLogout } from "@tabler/icons-react";
+import { IconUser } from "@tabler/icons-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import BrandLogo from "@/components/BrandLogo";
+import LogoutButton from "@/components/dashboard/LogoutButton";
 
 export default async function DashboardLayout({
   children,
@@ -31,12 +32,7 @@ export default async function DashboardLayout({
               </div>
             </div>
 
-            <form action={signOutAction}>
-              <button type="submit" className="btn btn-outline-danger btn-sm d-flex align-items-center gap-1">
-                <IconLogout size={16} />
-                <span className="d-none d-md-inline">Keluar</span>
-              </button>
-            </form>
+            <LogoutButton />
           </div>
         </div>
       </header>

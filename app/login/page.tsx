@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { signInAction } from "@/app/actions/auth";
-import { showToast } from "@/components/ui/ToastNotification";
+import { showToast, showLoading } from "@/components/ui/ToastNotification";
 import {
   IconLock,
   IconMail,
@@ -48,11 +48,14 @@ export default function LoginPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsLoading(true);
+    showLoading(true);
 
     const formData = new FormData(event.currentTarget);
     try {
       const result = await signInAction(formData);
       if (result && !result.success && result.error) {
+        showLoading(false);
+        setIsLoading(false);
         showToast("danger", result.error);
       } else {
         // Hapus kredensial tersimpan setelah berhasil masuk
@@ -65,11 +68,13 @@ export default function LoginPage() {
         try {
           localStorage.removeItem("kaskos_saved_auth");
         } catch {}
+        showToast("success", "Login berhasil! Membuka Dashboard...");
+        // Tetap biarkan isLoading & showLoading aktif hingga browser selesai pindah halaman
         return;
       }
-      showToast("danger", "Terjadi kendala saat mencoba masuk. Silakan periksa kembali email & kata sandi Anda.");
-    } finally {
+      showLoading(false);
       setIsLoading(false);
+      showToast("danger", "Terjadi kendala saat mencoba masuk. Silakan periksa kembali email & kata sandi Anda.");
     }
   }
 
@@ -164,7 +169,7 @@ export default function LoginPage() {
                   {isLoading ? (
                     <>
                       <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                      <span>Memverifikasi Akun...</span>
+                      <span>Memverifikasi & Membuka Dashboard...</span>
                     </>
                   ) : (
                     <>

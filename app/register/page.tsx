@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { signUpAction } from "@/app/actions/auth";
-import { showToast } from "@/components/ui/ToastNotification";
+import { showToast, showLoading } from "@/components/ui/ToastNotification";
 import {
   IconLock,
   IconMail,
@@ -24,6 +24,7 @@ export default function RegisterPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsLoading(true);
+    showLoading(true);
 
     const formData = new FormData(event.currentTarget);
     const email = formData.get("email")?.toString().trim();
@@ -41,17 +42,22 @@ export default function RegisterPage() {
     try {
       const result = await signUpAction(formData);
       if (result && !result.success && result.error) {
+        showLoading(false);
+        setIsLoading(false);
         showToast("danger", result.error);
       } else if (result && result.success && result.message) {
+        showLoading(false);
+        setIsLoading(false);
         showToast("success", result.message);
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) {
+        showToast("success", "Pendaftaran berhasil! Mengalihkan ke dashboard...");
         return;
       }
-      showToast("danger", "Terjadi kendala saat mendaftar. Silakan coba kembali beberapa saat lagi.");
-    } finally {
+      showLoading(false);
       setIsLoading(false);
+      showToast("danger", "Terjadi kendala saat mendaftar. Silakan coba kembali beberapa saat lagi.");
     }
   }
 

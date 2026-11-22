@@ -48,6 +48,7 @@ export default function ExpenseTable({
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "waiting" | "paid">("all");
   const [expandedExpenseId, setExpandedExpenseId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [expenseToDelete, setExpenseToDelete] = useState<{ id: string; title: string } | null>(null);
   const [selectedProofItem, setSelectedProofItem] = useState<PaymentProofModalItem | null>(null);
   const [selectedUploadItem, setSelectedUploadItem] = useState<UploadProofModalItem | null>(null);
   const [selectedReceiptExpense, setSelectedReceiptExpense] = useState<ExpenseWithItems | null>(null);
@@ -104,16 +105,21 @@ export default function ExpenseTable({
   const waitingCount = expensesList.filter((e) => getExpenseOverallStatus(e).status === "waiting").length;
   const paidCount = expensesList.filter((e) => getExpenseOverallStatus(e).status === "paid").length;
 
-  // Handler Hapus Tagihan
-  async function handleDeleteExpense(expenseId: string, title: string) {
-    if (!confirm(`Apakah Anda yakin ingin menghapus tagihan "${title}"? Tindakan ini tidak dapat dibatalkan.`)) {
-      return;
-    }
-    setDeletingId(expenseId);
+  // Handler Hapus Tagihan via Modal Konfirmasi Kustom (Tanpa alert/confirm browser)
+  async function confirmDeleteExpense() {
+    if (!expenseToDelete) return;
+    setDeletingId(expenseToDelete.id);
     const formData = new FormData();
-    formData.append("expense_id", expenseId);
-    await deleteExpenseAction(formData);
+    formData.append("expense_id", expenseToDelete.id);
+    const res = await deleteExpenseAction(formData);
     setDeletingId(null);
+    const targetTitle = expenseToDelete.title;
+    setExpenseToDelete(null);
+    if (res && !res.success) {
+      showToast("danger", res.error || "Gagal menghapus tagihan.");
+    } else {
+      showToast("success", `Tagihan "${targetTitle}" berhasil dihapus.`);
+    }
   }
 
   function toggleExpand(id: string) {
@@ -338,7 +344,7 @@ export default function ExpenseTable({
                           <button
                             type="button"
                             className="btn btn-outline-danger btn-sm"
-                            onClick={() => handleDeleteExpense(exp.id, exp.title)}
+                            onClick={() => setExpenseToDelete({ id: exp.id, title: exp.title })}
                             disabled={deletingId === exp.id}
                             title="Hapus tagihan ini"
                           >
@@ -627,6 +633,76 @@ export default function ExpenseTable({
           router.refresh();
         }}
       />
+
+      {/* Modal Konfirmasi Hapus Tagihan Kustom (Menggantikan confirm bawaan browser) */}
+      {expenseToDelete && (
+        <div
+          className="modal modal-blur fade show d-block"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.55)", zIndex: 1055 }}
+          tabIndex={-1}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="modal-dialog modal-sm modal-dialog-centered" role="document">
+            <div className="modal-content shadow-lg border-0 rounded-3">
+              <button
+                type="button"
+                className="btn-close"
+                disabled={Boolean(deletingId)}
+                onClick={() => setExpenseToDelete(null)}
+                aria-label="Tutup"
+              />
+              <div className="modal-status bg-danger" />
+              <div className="modal-body text-center py-4">
+                <div className="avatar avatar-lg bg-danger-lt text-danger rounded-circle mx-auto mb-3">
+                  <IconAlertCircle size={36} />
+                </div>
+                <h3 className="fw-bold text-dark mb-1">Hapus Tagihan?</h3>
+                <div className="text-secondary small mt-2">
+                  Apakah Anda yakin ingin menghapus tagihan <strong>&ldquo;{expenseToDelete.title}&rdquo;</strong>?
+                  Semua data patungan roommate dan bukti pembayaran yang terhubung akan ikut dihapus permanen.
+                </div>
+              </div>
+              <div className="modal-footer border-0 pt-0">
+                <div className="w-100">
+                  <div className="row g-2">
+                    <div className="col">
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary w-100"
+                        disabled={Boolean(deletingId)}
+                        onClick={() => setExpenseToDelete(null)}
+                      >
+                        Batal
+                      </button>
+                    </div>
+                    <div className="col">
+                      <button
+                        type="button"
+                        className="btn btn-danger w-100 d-flex align-items-center justify-content-center gap-1 shadow-xs"
+                        disabled={Boolean(deletingId)}
+                        onClick={confirmDeleteExpense}
+                      >
+                        {deletingId ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
+                            <span>Menghapus...</span>
+                          </>
+                        ) : (
+                          <>
+                            <IconTrashX size={16} />
+                            <span>Hapus</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
