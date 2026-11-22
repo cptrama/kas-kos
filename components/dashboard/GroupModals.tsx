@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createGroupAction, joinGroupByCodeAction, updateGroupPaymentInfoAction } from "@/app/actions/group";
-import { IconPlus, IconDoorEnter, IconSettings, IconCopy, IconCheck, IconBuildingCommunity } from "@tabler/icons-react";
+import { IconPlus, IconDoorEnter, IconSettings, IconCopy, IconCheck, IconBuildingCommunity, IconAlertCircle } from "@tabler/icons-react";
 
 interface GroupModalsProps {
   activeGroup?: {
@@ -23,6 +23,7 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
   const [isCopied, setIsCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "danger"; text: string } | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   function copyInviteCode() {
     if (!activeGroup?.invite_code) return;
@@ -31,15 +32,31 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
     setTimeout(() => setIsCopied(false), 2000);
   }
 
+  function openCreateModal() {
+    setModalError(null);
+    setShowCreate(true);
+  }
+
+  function openJoinModal() {
+    setModalError(null);
+    setShowJoin(true);
+  }
+
+  function openSettingsModal() {
+    setModalError(null);
+    setShowSettings(true);
+  }
+
   async function handleCreateGroup(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
+    setModalError(null);
     setMessage(null);
     const formData = new FormData(e.currentTarget);
     const res = await createGroupAction(formData);
     setIsLoading(false);
     if (!res.success) {
-      setMessage({ type: "danger", text: res.error || "Gagal membuat grup." });
+      setModalError(res.error || "Gagal membuat grup.");
     } else {
       setShowCreate(false);
       setMessage({ type: "success", text: "Grup kos berhasil dibuat!" });
@@ -49,12 +66,13 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
   async function handleJoinGroup(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
+    setModalError(null);
     setMessage(null);
     const formData = new FormData(e.currentTarget);
     const res = await joinGroupByCodeAction(formData);
     setIsLoading(false);
     if (!res.success) {
-      setMessage({ type: "danger", text: res.error || "Gagal bergabung." });
+      setModalError(res.error || "Gagal bergabung.");
     } else {
       setShowJoin(false);
       setMessage({ type: "success", text: res.message || "Berhasil bergabung!" });
@@ -64,12 +82,13 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
   async function handleUpdateSettings(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
+    setModalError(null);
     setMessage(null);
     const formData = new FormData(e.currentTarget);
     const res = await updateGroupPaymentInfoAction(formData);
     setIsLoading(false);
     if (!res.success) {
-      setMessage({ type: "danger", text: res.error || "Gagal memperbarui rekening." });
+      setModalError(res.error || "Gagal memperbarui rekening.");
     } else {
       setShowSettings(false);
       setMessage({ type: "success", text: "Rekening kas berhasil diperbarui!" });
@@ -78,8 +97,8 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
 
   return (
     <>
-      {/* Alert Notifikasi */}
-      {message && (
+      {/* Alert Notifikasi di Halaman Dashboard (Hanya saat modal tertutup) */}
+      {message && !showCreate && !showJoin && !showSettings && (
         <div className={`alert alert-${message.type} alert-dismissible mb-4`} role="alert">
           <div className="d-flex justify-content-between align-items-center">
             <div>{message.text}</div>
@@ -90,16 +109,16 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
 
       {/* Action Buttons */}
       <div className="d-flex gap-2 flex-wrap mb-4">
-        <button className="btn btn-teal d-flex align-items-center gap-2" onClick={() => setShowCreate(true)}>
+        <button className="btn btn-teal d-flex align-items-center gap-2" onClick={openCreateModal}>
           <IconPlus size={18} />
           <span>Buat Grup Kos Baru</span>
         </button>
-        <button className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={() => setShowJoin(true)}>
+        <button className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={openJoinModal}>
           <IconDoorEnter size={18} />
           <span>Gabung dengan Kode</span>
         </button>
         {activeGroup && isAdmin && (
-          <button className="btn btn-outline-teal d-flex align-items-center gap-2" onClick={() => setShowSettings(true)}>
+          <button className="btn btn-outline-teal d-flex align-items-center gap-2" onClick={openSettingsModal}>
             <IconSettings size={18} />
             <span>Atur Rekening Kas</span>
           </button>
@@ -139,15 +158,24 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
 
       {/* Modal: Buat Grup Kos */}
       {showCreate && (
-        <div className="modal modal-blur fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <div className="modal modal-blur fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1055 }}>
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
+            <div className="modal-content shadow-lg border-0">
+              <div className="modal-header border-bottom">
                 <h5 className="modal-title fw-bold">Buat Grup Kamar Kos Baru</h5>
-                <button type="button" className="btn-close" onClick={() => setShowCreate(false)}></button>
+                <button type="button" className="btn-close" onClick={() => setShowCreate(false)} disabled={isLoading}></button>
               </div>
               <form onSubmit={handleCreateGroup}>
-                <div className="modal-body">
+                <div className="modal-body p-4">
+                  {/* Validasi Pop-up Muncul Langsung di Depan Layar Pengguna di dalam Modal */}
+                  {modalError && (
+                    <div className="alert alert-danger alert-dismissible d-flex align-items-start gap-2 mb-3" role="alert">
+                      <IconAlertCircle size={20} className="text-danger flex-shrink-0 mt-1" />
+                      <div className="flex-grow-1 small">{modalError}</div>
+                      <button type="button" className="btn-close" onClick={() => setModalError(null)}></button>
+                    </div>
+                  )}
+
                   <div className="mb-3">
                     <label className="form-label required">Nama Grup Kos / Kontrakan</label>
                     <input
@@ -197,8 +225,8 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
                     />
                   </div>
                 </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowCreate(false)}>
+                <div className="modal-footer border-top bg-light">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowCreate(false)} disabled={isLoading}>
                     Batal
                   </button>
                   <button type="submit" disabled={isLoading} className="btn btn-teal">
@@ -213,15 +241,24 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
 
       {/* Modal: Gabung Grup via Kode */}
       {showJoin && (
-        <div className="modal modal-blur fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <div className="modal modal-blur fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1055 }}>
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
+            <div className="modal-content shadow-lg border-0">
+              <div className="modal-header border-bottom">
                 <h5 className="modal-title fw-bold">Gabung ke Grup Kos</h5>
-                <button type="button" className="btn-close" onClick={() => setShowJoin(false)}></button>
+                <button type="button" className="btn-close" onClick={() => setShowJoin(false)} disabled={isLoading}></button>
               </div>
               <form onSubmit={handleJoinGroup}>
-                <div className="modal-body">
+                <div className="modal-body p-4">
+                  {/* Validasi Pop-up Muncul Langsung di Depan Layar Pengguna di dalam Modal */}
+                  {modalError && (
+                    <div className="alert alert-danger alert-dismissible d-flex align-items-start gap-2 mb-3" role="alert">
+                      <IconAlertCircle size={20} className="text-danger flex-shrink-0 mt-1" />
+                      <div className="flex-grow-1 small">{modalError}</div>
+                      <button type="button" className="btn-close" onClick={() => setModalError(null)}></button>
+                    </div>
+                  )}
+
                   <div className="mb-3">
                     <label className="form-label required">Masukkan Kode Undangan 6-Karakter</label>
                     <input
@@ -237,8 +274,8 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
                     </small>
                   </div>
                 </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowJoin(false)}>
+                <div className="modal-footer border-top bg-light">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowJoin(false)} disabled={isLoading}>
                     Batal
                   </button>
                   <button type="submit" disabled={isLoading} className="btn btn-teal">
@@ -253,16 +290,25 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
 
       {/* Modal: Atur Rekening Kas */}
       {showSettings && activeGroup && (
-        <div className="modal modal-blur fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <div className="modal modal-blur fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1055 }}>
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
+            <div className="modal-content shadow-lg border-0">
+              <div className="modal-header border-bottom">
                 <h5 className="modal-title fw-bold">Pengaturan Rekening Tujuan Transfer</h5>
-                <button type="button" className="btn-close" onClick={() => setShowSettings(false)}></button>
+                <button type="button" className="btn-close" onClick={() => setShowSettings(false)} disabled={isLoading}></button>
               </div>
               <form onSubmit={handleUpdateSettings}>
                 <input type="hidden" name="group_id" value={activeGroup.id} />
-                <div className="modal-body">
+                <div className="modal-body p-4">
+                  {/* Validasi Pop-up Muncul Langsung di Depan Layar Pengguna di dalam Modal */}
+                  {modalError && (
+                    <div className="alert alert-danger alert-dismissible d-flex align-items-start gap-2 mb-3" role="alert">
+                      <IconAlertCircle size={20} className="text-danger flex-shrink-0 mt-1" />
+                      <div className="flex-grow-1 small">{modalError}</div>
+                      <button type="button" className="btn-close" onClick={() => setModalError(null)}></button>
+                    </div>
+                  )}
+
                   <p className="text-muted small mb-3">
                     Informasi ini akan muncul di dashboard anggota saat mereka akan mentransfer uang kas bersama.
                   </p>
@@ -300,8 +346,8 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
                     />
                   </div>
                 </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowSettings(false)}>
+                <div className="modal-footer border-top bg-light">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowSettings(false)} disabled={isLoading}>
                     Batal
                   </button>
                   <button type="submit" disabled={isLoading} className="btn btn-teal">

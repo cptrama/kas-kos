@@ -129,6 +129,18 @@ CREATE INDEX IF NOT EXISTS idx_bill_items_expense ON public.bill_items(expense_i
 CREATE INDEX IF NOT EXISTS idx_groups_invite_code ON public.groups(invite_code);
 
 -- ==============================================================================
+-- 7.5 HAK AKSES DASAR (GRANT PRIVILEGES)
+-- ==============================================================================
+GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO postgres, anon, authenticated, service_role;
+
+-- ==============================================================================
 -- 8. ROW LEVEL SECURITY (RLS) POLICIES
 -- Keamanan data agar anggota hanya melihat grup & tagihan miliknya sendiri
 -- ==============================================================================
