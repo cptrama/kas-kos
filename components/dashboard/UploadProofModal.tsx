@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { uploadPaymentProofAction } from "@/app/actions/expense";
 import { formatRupiah } from "@/lib/utils";
+import { showToast } from "@/components/ui/ToastNotification";
 import {
   IconUpload,
   IconX,
@@ -34,19 +35,16 @@ export default function UploadProofModal({
 }: UploadProofModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen || !item) return null;
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
-    setErrorMessage(null);
 
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        setErrorMessage("Ukuran gambar terlalu besar. Maksimal 5 MB.");
+        showToast("danger", "Ukuran gambar terlalu besar. Maksimal 5 MB.");
         setPreviewUrl(null);
         return;
       }
@@ -67,13 +65,11 @@ export default function UploadProofModal({
 
     const file = fileInputRef.current?.files?.[0];
     if (!file) {
-      setErrorMessage("Silakan pilih foto atau screenshot bukti transfer terlebih dahulu.");
+      showToast("danger", "Silakan pilih foto atau screenshot bukti transfer terlebih dahulu.");
       return;
     }
 
     setIsLoading(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
 
     const formData = new FormData(event.currentTarget);
     formData.append("bill_item_id", item.id);
@@ -81,17 +77,15 @@ export default function UploadProofModal({
     try {
       const res = await uploadPaymentProofAction(formData);
 
-      if (!res.success) {
-        setErrorMessage(res.error || "Gagal mengunggah bukti pembayaran.");
+      if (!res?.success) {
+        showToast("danger", res?.error || "Gagal mengunggah bukti pembayaran.");
       } else {
-        setSuccessMessage(res.message || "Bukti transfer berhasil dikirim!");
-        setTimeout(() => {
-          onSuccess?.();
-          onClose();
-        }, 1500);
+        showToast("success", res.message || "Bukti transfer berhasil dikirim!");
+        onSuccess?.();
+        onClose();
       }
     } catch {
-      setErrorMessage("Terjadi kendala jaringan saat mengunggah. Silakan coba lagi.");
+      showToast("danger", "Terjadi kendala jaringan saat mengunggah. Silakan coba lagi.");
     } finally {
       setIsLoading(false);
     }
@@ -137,21 +131,6 @@ export default function UploadProofModal({
                   {formatRupiah(item.splitAmount)}
                 </div>
               </div>
-
-              {/* Alert Feedback */}
-              {errorMessage && (
-                <div className="alert alert-danger d-flex align-items-start gap-2 mb-3" role="alert">
-                  <IconAlertCircle size={18} className="text-danger flex-shrink-0 mt-1" />
-                  <div className="small">{errorMessage}</div>
-                </div>
-              )}
-
-              {successMessage && (
-                <div className="alert alert-success d-flex align-items-start gap-2 mb-3" role="alert">
-                  <IconCheck size={18} className="text-success flex-shrink-0 mt-1" />
-                  <div className="small">{successMessage}</div>
-                </div>
-              )}
 
               {/* Upload Foto Input */}
               <div className="mb-3">

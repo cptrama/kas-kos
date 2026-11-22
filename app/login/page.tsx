@@ -4,22 +4,18 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { signInAction } from "@/app/actions/auth";
+import { showToast } from "@/components/ui/ToastNotification";
 import {
-  IconWallet,
   IconLock,
   IconMail,
   IconArrowRight,
   IconEye,
   IconEyeOff,
-  IconAlertCircle,
-  IconCheck,
   IconArrowLeft,
   IconShieldLock,
 } from "@tabler/icons-react";
 
 export default function LoginPage() {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -39,7 +35,8 @@ export default function LoginPage() {
 
       const params = new URLSearchParams(window.location.search);
       if (params.get("confirmed") === "true") {
-        setSuccessMessage(
+        showToast(
+          "success",
           "Email Anda berhasil dikonfirmasi! Alamat email dan kata sandi Anda telah terisi otomatis. Silakan langsung klik Masuk ke Dashboard."
         );
       }
@@ -50,14 +47,13 @@ export default function LoginPage() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setErrorMessage(null);
     setIsLoading(true);
 
     const formData = new FormData(event.currentTarget);
     try {
       const result = await signInAction(formData);
       if (result && !result.success && result.error) {
-        setErrorMessage(result.error);
+        showToast("danger", result.error);
       } else {
         // Hapus kredensial tersimpan setelah berhasil masuk
         try {
@@ -71,7 +67,7 @@ export default function LoginPage() {
         } catch {}
         return;
       }
-      setErrorMessage("Terjadi kendala saat mencoba masuk. Silakan periksa kembali email & kata sandi Anda.");
+      showToast("danger", "Terjadi kendala saat mencoba masuk. Silakan periksa kembali email & kata sandi Anda.");
     } finally {
       setIsLoading(false);
     }
@@ -100,23 +96,6 @@ export default function LoginPage() {
             <p className="text-muted text-center small mb-4">
               Masuk untuk memantau kas kamar kos Anda
             </p>
-
-            {/* Success Message Alert (Konfirmasi Email) */}
-            {successMessage && (
-              <div className="alert alert-success alert-dismissible d-flex align-items-start gap-2 mb-3 shadow-sm border-success" role="alert">
-                <IconCheck size={20} className="text-success flex-shrink-0 mt-1" />
-                <div className="small">{successMessage}</div>
-                <button type="button" className="btn-close" onClick={() => setSuccessMessage(null)}></button>
-              </div>
-            )}
-
-            {/* Error Message Alert */}
-            {errorMessage && (
-              <div className="alert alert-danger alert-dismissible d-flex align-items-start gap-2 mb-3" role="alert">
-                <IconAlertCircle size={20} className="text-danger flex-shrink-0 mt-1" />
-                <div className="small">{errorMessage}</div>
-              </div>
-            )}
 
             <form onSubmit={handleSubmit} autoComplete="on">
               {/* Email Input */}

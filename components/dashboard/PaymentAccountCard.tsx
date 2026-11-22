@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { IconCopy, IconCheck, IconCreditCard, IconBuildingBank, IconWallet } from "@tabler/icons-react";
+import { showToast } from "@/components/ui/ToastNotification";
 
 interface PaymentAccountCardProps {
   paymentBank?: string | null;
@@ -17,7 +18,6 @@ export default function PaymentAccountCard({
   isAdmin = false,
 }: PaymentAccountCardProps) {
   const [copied, setCopied] = useState(false);
-  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
   async function handleCopy() {
     if (!paymentAccountNumber) return;
@@ -36,15 +36,13 @@ export default function PaymentAccountCard({
       }
 
       setCopied(true);
-      setCopyFeedback(`Nomor rekening/HP ${paymentAccountNumber} berhasil disalin!`);
+      showToast("success", `Nomor rekening/HP ${paymentAccountNumber} berhasil disalin ke clipboard!`);
 
       setTimeout(() => {
         setCopied(false);
-        setCopyFeedback(null);
       }, 2500);
     } catch {
-      setCopyFeedback("Gagal menyalin otomatis. Silakan salin manual.");
-      setTimeout(() => setCopyFeedback(null), 2500);
+      showToast("danger", "Gagal menyalin otomatis. Silakan salin manual.");
     }
   }
 
@@ -146,14 +144,6 @@ export default function PaymentAccountCard({
             </div>
           )}
         </div>
-
-        {/* Feedback Alert Toast */}
-        {copyFeedback && (
-          <div className="alert alert-success alert-dismissible py-2 px-3 mt-3 mb-0 d-flex align-items-center gap-2 small animate__animated animate__fadeIn">
-            <IconCheck size={16} className="text-success flex-shrink-0" />
-            <div>{copyFeedback}</div>
-          </div>
-        )}
       </div>
     </div>
   );

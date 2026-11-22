@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ExpenseWithItems, deleteExpenseAction } from "@/app/actions/expense";
 import { formatRupiah, formatDateIndo } from "@/lib/utils";
+import { showToast } from "@/components/ui/ToastNotification";
 import PaymentProofModal, { PaymentProofModalItem } from "@/components/dashboard/PaymentProofModal";
 import UploadProofModal, { UploadProofModalItem } from "@/components/dashboard/UploadProofModal";
 import ExpenseReceiptModal from "@/components/dashboard/ExpenseReceiptModal";
@@ -50,24 +51,6 @@ export default function ExpenseTable({
   const [selectedProofItem, setSelectedProofItem] = useState<PaymentProofModalItem | null>(null);
   const [selectedUploadItem, setSelectedUploadItem] = useState<UploadProofModalItem | null>(null);
   const [selectedReceiptExpense, setSelectedReceiptExpense] = useState<ExpenseWithItems | null>(null);
-
-  // Floating Toast Notification state (Pop-up mengambang 3-6 detik)
-  const [toast, setToast] = useState<{ type: "success" | "danger" | "info"; message: string } | null>(null);
-  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  function triggerToast(type: "success" | "danger" | "info", msg: string) {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToast({ type, message: msg });
-    toastTimerRef.current = setTimeout(() => {
-      setToast(null);
-    }, 4500);
-  }
-
-  useEffect(() => {
-    return () => {
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    };
-  }, []);
 
   useEffect(() => {
     setExpensesList(initialExpenses);
@@ -138,73 +121,7 @@ export default function ExpenseTable({
   }
 
   return (
-    <>
-      {/* Floating Pop-up Notification (Toast Mengambang di Depan Layar 3-6 Detik) */}
-      {toast && (
-        <div
-          style={{
-            position: "fixed",
-            top: "24px",
-            right: "24px",
-            zIndex: 99999,
-            maxWidth: "420px",
-            width: "calc(100% - 48px)",
-            backgroundColor: toast.type === "success" ? "#0ca678" : toast.type === "danger" ? "#d63939" : "#206bc4",
-            color: "#ffffff",
-            borderRadius: "12px",
-            boxShadow: "0 12px 30px rgba(0, 0, 0, 0.35), 0 4px 10px rgba(0, 0, 0, 0.15)",
-            overflow: "hidden",
-            animation: "toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
-          }}
-          role="alert"
-        >
-          <div className="d-flex align-items-center p-3">
-            <div className="me-3 flex-shrink-0">
-              <div
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "50%",
-                  backgroundColor: "rgba(255, 255, 255, 0.22)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {toast.type === "success" ? (
-                  <IconCheck size={20} color="#fff" />
-                ) : (
-                  <IconAlertCircle size={20} color="#fff" />
-                )}
-              </div>
-            </div>
-            <div className="flex-grow-1 text-white pe-2">
-              <div className="fw-bold small lh-1 mb-1">
-                {toast.type === "success" ? "Berhasil!" : "Pemberitahuan"}
-              </div>
-              <div className="small lh-sm" style={{ opacity: 0.95 }}>
-                {toast.message}
-              </div>
-            </div>
-            <button
-              type="button"
-              className="btn-close btn-close-white flex-shrink-0"
-              onClick={() => setToast(null)}
-              aria-label="Tutup"
-            ></button>
-          </div>
-          {/* Progress bar hitung mundur 4.5 detik */}
-          <div
-            style={{
-              height: "4px",
-              backgroundColor: "rgba(255, 255, 255, 0.4)",
-              animation: "toastProgress 4.5s linear forwards",
-            }}
-          />
-        </div>
-      )}
-
-      <div className="card shadow-sm border-0 mb-4 bg-white">
+    <div className="card shadow-sm border-0 mb-4 bg-white">
       {/* Header Tabel & Filter Status */}
       <div className="card-header border-bottom p-3 p-md-4">
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 w-100">
@@ -703,7 +620,7 @@ export default function ExpenseTable({
             );
           }
           setSelectedReceiptExpense(null);
-          triggerToast(
+          showToast(
             "success",
             updatedData.message || "Bukti struk pembelian berhasil disimpan dan dipublikasikan!"
           );
@@ -711,6 +628,5 @@ export default function ExpenseTable({
         }}
       />
     </div>
-    </>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createExpenseWithSplitAction } from "@/app/actions/expense";
 import { formatRupiah } from "@/lib/utils";
+import { showToast } from "@/components/ui/ToastNotification";
 import {
   IconReceipt2,
   IconBolt,
@@ -32,8 +33,6 @@ export default function CreateExpenseModal({
 }: CreateExpenseModalProps) {
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -42,22 +41,17 @@ export default function CreateExpenseModal({
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
-    setErrorMsg(null);
-    setSuccessMsg(null);
 
     const formData = new FormData(e.currentTarget);
     const res = await createExpenseWithSplitAction(formData);
 
     setIsLoading(false);
-    if (!res.success) {
-      setErrorMsg(res.error || "Gagal membuat tagihan.");
+    if (!res?.success) {
+      showToast("danger", res?.error || "Gagal membuat tagihan.");
     } else {
-      setSuccessMsg(res.message || "Tagihan berhasil dibuat!");
+      showToast("success", res.message || "Tagihan berhasil dibuat!");
       if (onSuccess) onSuccess();
-      setTimeout(() => {
-        onClose();
-        setSuccessMsg(null);
-      }, 1200);
+      onClose();
     }
   }
 
@@ -87,20 +81,6 @@ export default function CreateExpenseModal({
             <input type="hidden" name="group_id" value={groupId} />
 
             <div className="modal-body p-4">
-              {errorMsg && (
-                <div className="alert alert-danger d-flex align-items-center gap-2 mb-3" role="alert">
-                  <IconAlertCircle size={20} />
-                  <div>{errorMsg}</div>
-                </div>
-              )}
-
-              {successMsg && (
-                <div className="alert alert-success d-flex align-items-center gap-2 mb-3" role="alert">
-                  <IconCheck size={20} />
-                  <div>{successMsg}</div>
-                </div>
-              )}
-
               <div className="row g-3">
                 {/* Judul Pengeluaran */}
                 <div className="col-12">

@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { signUpAction } from "@/app/actions/auth";
+import { showToast } from "@/components/ui/ToastNotification";
 import {
-  IconWallet,
   IconLock,
   IconMail,
   IconUser,
@@ -13,22 +13,16 @@ import {
   IconArrowRight,
   IconEye,
   IconEyeOff,
-  IconAlertCircle,
-  IconCheck,
   IconArrowLeft,
   IconShieldLock,
 } from "@tabler/icons-react";
 
 export default function RegisterPage() {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setErrorMessage(null);
-    setSuccessMessage(null);
     setIsLoading(true);
 
     const formData = new FormData(event.currentTarget);
@@ -47,15 +41,15 @@ export default function RegisterPage() {
     try {
       const result = await signUpAction(formData);
       if (result && !result.success && result.error) {
-        setErrorMessage(result.error);
+        showToast("danger", result.error);
       } else if (result && result.success && result.message) {
-        setSuccessMessage(result.message);
+        showToast("success", result.message);
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) {
         return;
       }
-      setErrorMessage("Terjadi kendala saat mendaftar. Silakan coba kembali beberapa saat lagi.");
+      showToast("danger", "Terjadi kendala saat mendaftar. Silakan coba kembali beberapa saat lagi.");
     } finally {
       setIsLoading(false);
     }
@@ -84,22 +78,6 @@ export default function RegisterPage() {
             <p className="text-muted text-center small mb-4">
               Gratis 100% untuk seluruh anak kos & mahasiswa
             </p>
-
-            {/* Error Message Alert */}
-            {errorMessage && (
-              <div className="alert alert-danger alert-dismissible d-flex align-items-start gap-2 mb-3" role="alert">
-                <IconAlertCircle size={20} className="text-danger flex-shrink-0 mt-1" />
-                <div className="small">{errorMessage}</div>
-              </div>
-            )}
-
-            {/* Success Message Alert */}
-            {successMessage && (
-              <div className="alert alert-success d-flex align-items-start gap-2 mb-3" role="alert">
-                <IconCheck size={20} className="text-success flex-shrink-0 mt-1" />
-                <div className="small">{successMessage}</div>
-              </div>
-            )}
 
             <form onSubmit={handleSubmit} autoComplete="on">
               {/* Full Name */}

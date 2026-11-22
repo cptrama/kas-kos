@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { approvePaymentAction, rejectPaymentAction } from "@/app/actions/expense";
 import { formatRupiah, formatDateIndo } from "@/lib/utils";
+import { showToast } from "@/components/ui/ToastNotification";
 import {
   IconCheck,
   IconX,
@@ -44,14 +45,12 @@ export default function PaymentProofModal({
   const [isLoading, setIsLoading] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectInput, setShowRejectInput] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "danger"; text: string } | null>(null);
 
   if (!isOpen || !item) return null;
 
   async function handleApprove() {
     if (!item) return;
     setIsLoading(true);
-    setMessage(null);
 
     const formData = new FormData();
     formData.append("bill_item_id", item.id);
@@ -59,22 +58,18 @@ export default function PaymentProofModal({
     const res = await approvePaymentAction(formData);
     setIsLoading(false);
 
-    if (!res.success) {
-      setMessage({ type: "danger", text: res.error || "Gagal memverifikasi pembayaran." });
+    if (!res?.success) {
+      showToast("danger", res?.error || "Gagal memverifikasi pembayaran.");
     } else {
-      setMessage({ type: "success", text: res.message || "Pembayaran berhasil diverifikasi!" });
+      showToast("success", res.message || "Pembayaran berhasil diverifikasi!");
       if (onSuccess) onSuccess();
-      setTimeout(() => {
-        onClose();
-        setMessage(null);
-      }, 1200);
+      onClose();
     }
   }
 
   async function handleReject() {
     if (!item) return;
     setIsLoading(true);
-    setMessage(null);
 
     const formData = new FormData();
     formData.append("bill_item_id", item.id);
@@ -83,16 +78,13 @@ export default function PaymentProofModal({
     const res = await rejectPaymentAction(formData);
     setIsLoading(false);
 
-    if (!res.success) {
-      setMessage({ type: "danger", text: res.error || "Gagal menolak verifikasi." });
+    if (!res?.success) {
+      showToast("danger", res?.error || "Gagal menolak verifikasi.");
     } else {
-      setMessage({ type: "success", text: res.message || "Status dikembalikan ke Belum Bayar." });
+      showToast("success", res.message || "Status dikembalikan ke Belum Bayar.");
       if (onSuccess) onSuccess();
-      setTimeout(() => {
-        onClose();
-        setMessage(null);
-        setShowRejectInput(false);
-      }, 1200);
+      setShowRejectInput(false);
+      onClose();
     }
   }
 
@@ -120,16 +112,6 @@ export default function PaymentProofModal({
           </div>
 
           <div className="modal-body p-4">
-            {/* Alert Notifikasi */}
-            {message && (
-              <div className={`alert alert-${message.type} alert-dismissible mb-3`} role="alert">
-                <div className="d-flex justify-content-between align-items-center">
-                  <div>{message.text}</div>
-                  <button type="button" className="btn-close" onClick={() => setMessage(null)}></button>
-                </div>
-              </div>
-            )}
-
             {/* Info Roommate & Nominal Tagihan */}
             <div className="card bg-light border-0 p-3 mb-4">
               <div className="row align-items-center g-3">

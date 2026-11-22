@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ExpenseWithItems, uploadExpenseReceiptAction } from "@/app/actions/expense";
 import { formatRupiah, formatDateIndo } from "@/lib/utils";
+import { showToast } from "@/components/ui/ToastNotification";
 import {
   IconReceipt2,
   IconUpload,
@@ -39,7 +40,6 @@ export default function ExpenseReceiptModal({
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [copiedToken, setCopiedToken] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "danger"; text: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Pastikan form unggah selalu di-reset saat modal dibuka atau ditutup
@@ -47,7 +47,6 @@ export default function ExpenseReceiptModal({
     if (!isOpen) {
       setShowUploadForm(false);
       setPreviewUrl(null);
-      setMessage(null);
     }
   }, [isOpen, expense?.id]);
 
@@ -57,7 +56,7 @@ export default function ExpenseReceiptModal({
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        setMessage({ type: "danger", text: "Ukuran gambar terlalu besar. Maksimal 5 MB." });
+        showToast("danger", "Ukuran gambar terlalu besar. Maksimal 5 MB.");
         setPreviewUrl(null);
         return;
       }
@@ -72,6 +71,7 @@ export default function ExpenseReceiptModal({
   function handleCopyToken(token: string) {
     navigator.clipboard.writeText(token);
     setCopiedToken(true);
+    showToast("success", "Nomor token berhasil disalin ke clipboard!");
     setTimeout(() => setCopiedToken(false), 2500);
   }
 
@@ -80,7 +80,6 @@ export default function ExpenseReceiptModal({
     if (!expense) return;
 
     setIsLoading(true);
-    setMessage(null);
 
     const formData = new FormData(e.currentTarget);
     formData.append("expense_id", expense.id);
@@ -91,18 +90,21 @@ export default function ExpenseReceiptModal({
 
       if (res && !res.success) {
         const errMsg = res.error || "Gagal mengunggah bukti struk.";
-        setMessage({ type: "danger", text: errMsg });
+        showToast("danger", errMsg);
         return;
       }
 
       setShowUploadForm(false);
       setPreviewUrl(null);
 
+      const successMsg = res?.message || "Bukti struk pembelian berhasil disimpan dan dipublikasikan!";
+      showToast("success", successMsg);
+
       if (onSuccess) {
         onSuccess({
           proofImageUrl: res?.proofImageUrl || previewUrl,
           receiptNotes: (formData.get("receipt_notes")?.toString().trim()) || null,
-          message: res?.message || "Bukti struk pembelian berhasil disimpan dan dipublikasikan!",
+          message: successMsg,
         });
       }
 
@@ -111,7 +113,7 @@ export default function ExpenseReceiptModal({
     } catch (err: any) {
       setIsLoading(false);
       const errMsg = err?.message || "Terjadi kendala jaringan saat mengunggah.";
-      setMessage({ type: "danger", text: errMsg });
+      showToast("danger", errMsg);
     }
   }
 
@@ -120,36 +122,26 @@ export default function ExpenseReceiptModal({
       className="modal modal-blur fade show d-block"
       style={{ backgroundColor: "rgba(0,0,0,0.65)", zIndex: 1060 }}
     >
-      <div className="modal-dialog modal-dialog-centered modal-lg">
-        <div className="modal-content shadow-lg border-0">
-          {/* Header Modal */}
-          <div className="modal-header border-bottom">
-            <div className="d-flex align-items-center gap-2">
-              <span className="badge bg-teal text-white p-2 rounded-circle">
-                <IconShieldCheck size={20} />
-              </span>
-              <div>
-                <h5 className="modal-title fw-bold m-0">Transparansi Struk Pembelian Kas</h5>
-                <span className="text-secondary small">
-                  Bukti realisasi pengeluaran: <strong>{expense.title}</strong>
+        <div className="modal-dialog modal-dialog-centered modal-lg">
+          <div className="modal-content shadow-lg border-0">
+            {/* Header Modal */}
+            <div className="modal-header border-bottom">
+              <div className="d-flex align-items-center gap-2">
+                <span className="badge bg-teal text-white p-2 rounded-circle">
+                  <IconShieldCheck size={20} />
                 </span>
-              </div>
-            </div>
-            <button type="button" className="btn-close" onClick={onClose} disabled={isLoading}></button>
-          </div>
-
-          <div className="modal-body p-4">
-            {/* Alert Notifikasi */}
-            {message && (
-              <div className={`alert alert-${message.type} alert-dismissible mb-3`} role="alert">
-                <div className="d-flex justify-content-between align-items-center">
-                  <div>{message.text}</div>
-                  <button type="button" className="btn-close" onClick={() => setMessage(null)}></button>
+                <div>
+                  <h5 className="modal-title fw-bold m-0">Transparansi Struk Pembelian Kas</h5>
+                  <span className="text-secondary small">
+                    Bukti realisasi pengeluaran: <strong>{expense.title}</strong>
+                  </span>
                 </div>
               </div>
-            )}
+              <button type="button" className="btn-close" onClick={onClose} disabled={isLoading}></button>
+            </div>
 
-            {/* Kartu Ringkasan Pengeluaran */}
+            <div className="modal-body p-4">
+              {/* Kartu Ringkasan Pengeluaran */}
             <div className="card bg-light border-0 p-3 mb-4">
               <div className="row align-items-center g-3">
                 <div className="col-sm-6">
@@ -229,8 +221,8 @@ export default function ExpenseReceiptModal({
                 <div className="p-4 bg-light rounded border border-dashed text-center mb-3">
                   <IconReceipt2 size={40} className="text-muted mb-2 opacity-50" />
                   <h4 className="fw-bold text-dark mb-1">Belum Ada Struk Pembelian</h4>
-                  <p className="text-secondary small m-0" style={{ maxWidth: "460px", margin: "auto" }}>
-                    Koordinator kos belum mengunggah foto struk token/kuitansi pembelian untuk pengeluaran ini.
+                  <p className="text-secondary small mx-auto mb-0 text-center" style={{ maxWidth: "460px" }}>
+                    Koordinator kos belum mengunggah foto struk/kuitansi pembelian untuk pengeluaran ini.
                   </p>
                   {isAdmin && (
                     <button
@@ -268,7 +260,7 @@ export default function ExpenseReceiptModal({
 
                 <div className="mb-3">
                   <label className="form-label required">
-                    Pilih Berkas Foto Struk / Screenshot Token (Maks. 5 MB)
+                    Pilih Berkas Foto Struk / Kuitansi Pembelian (Maks. 5 MB)
                   </label>
                   <input
                     type="file"
