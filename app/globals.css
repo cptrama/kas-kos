@@ -77,31 +77,63 @@ body.bg-light {
 }
 
 /* ==============================================================================
+   DASHBOARD CANVAS & CARD ELEVATION (Kontras Jelas Light & Dark Mode)
+   ============================================================================== */
+
+/* Light Mode Canvas & Card */
+.page {
+  background-color: #f1f5f9 !important;
+  color: #1e293b;
+}
+
+/* Tetap pertahankan background landing page putih murni */
+.page.bg-white {
+  background-color: #ffffff !important;
+}
+
+.navbar {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.card {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.card:hover {
+  box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* ==============================================================================
    DARK MODE ENHANCEMENTS (Tabler Compatible)
    ============================================================================== */
 [data-bs-theme="dark"],
 .theme-dark {
-  --tblr-body-bg: #0f172a;
+  --tblr-body-bg: #090e1a;
   --tblr-body-color: #f8fafc;
-  --tblr-card-bg: #1e293b;
-  --tblr-card-border-color: #334155;
+  --tblr-card-bg: #172337;
+  --tblr-card-border-color: rgba(255, 255, 255, 0.12);
   color-scheme: dark;
 }
 
 [data-bs-theme="dark"] body,
 body.theme-dark {
-  background-color: #0f172a !important;
+  background-color: #090e1a !important;
   color: #f8fafc;
 }
 
 [data-bs-theme="dark"] .page,
 .theme-dark .page {
-  background-color: #0f172a !important;
+  background-color: #090e1a !important;
 }
 
 [data-bs-theme="dark"] .bg-white,
 .theme-dark .bg-white {
-  background-color: #1e293b !important;
+  background-color: #172337 !important;
   color: #f8fafc;
 }
 
@@ -112,40 +144,50 @@ body.theme-dark {
 
 [data-bs-theme="dark"] .card,
 .theme-dark .card {
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
-  color: #f8fafc;
+  background-color: #172337 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  color: #f8fafc !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 4px 10px -2px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-bs-theme="dark"] .card:hover,
+.theme-dark .card:hover {
+  border-color: rgba(12, 166, 120, 0.5) !important;
+  box-shadow: 0 14px 28px -5px rgba(0, 0, 0, 0.7), 0 6px 12px -2px rgba(0, 0, 0, 0.5) !important;
 }
 
 [data-bs-theme="dark"] .navbar,
 .theme-dark .navbar {
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
+  background-color: #111a2e !important;
+  border-color: #243248 !important;
 }
 
 [data-bs-theme="dark"] .modal-content,
 .theme-dark .modal-content {
-  background-color: #1e293b !important;
+  background-color: #172337 !important;
   color: #f8fafc !important;
-  border-color: #334155 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.8) !important;
 }
 
 [data-bs-theme="dark"] .modal-header,
 [data-bs-theme="dark"] .modal-footer,
 .theme-dark .modal-header,
 .theme-dark .modal-footer {
-  border-color: #334155 !important;
+  background-color: #172337 !important;
+  border-color: #243248 !important;
 }
 
 [data-bs-theme="dark"] .table,
 .theme-dark .table {
   color: #f8fafc !important;
-  border-color: #334155 !important;
+  border-color: #243248 !important;
 }
 
 [data-bs-theme="dark"] .table > :not(caption) > * > *,
 .theme-dark .table > :not(caption) > * > * {
-  border-bottom-color: #334155 !important;
+  border-bottom-color: #243248 !important;
   color: #f8fafc;
 }
 
