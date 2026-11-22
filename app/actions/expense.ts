@@ -585,129 +585,141 @@ export async function getGroupExpenses(groupId: string): Promise<ExpenseWithItem
  * Server Action: Mengunggah Struk Pembelian / Realisasi Pengeluaran dari Koordinator Kos
  */
 export async function uploadExpenseReceiptAction(formData: FormData): Promise<ExpenseResponse> {
-  const expenseId = formData.get("expense_id")?.toString().trim();
-  const receiptNotes = formData.get("receipt_notes")?.toString().trim() || "";
-  const file = formData.get("receipt_file") as File | null;
+  try {
+    const expenseId = formData.get("expense_id")?.toString().trim();
+    const receiptNotes = formData.get("receipt_notes")?.toString().trim() || "";
+    const file = formData.get("receipt_file") as File | null;
 
-  if (!expenseId) {
-    return { success: false, error: "ID pengeluaran tidak valid." };
-  }
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { success: false, error: "Sesi telah berakhir. Silakan login kembali." };
-  }
-
-  const { data: exp, error: expErr } = await supabase
-    .from("expenses")
-    .select("id, group_id, title")
-    .eq("id", expenseId)
-    .single();
-
-  if (expErr || !exp) {
-    return { success: false, error: "Data pengeluaran tidak ditemukan." };
-  }
-
-  const isAdmin = await verifyGroupAdmin(supabase, exp.group_id, user.id);
-  if (!isAdmin) {
-    return { success: false, error: "Hanya koordinator kos yang berwenang mengunggah struk pembelian." };
-  }
-
-  let publicUrl: string | null = null;
-
-  if (file && file.size > 0) {
-    const MAX_FILE_SIZE = 5 * 1024 * 1024;
-    if (file.size > MAX_FILE_SIZE) {
-      return { success: false, error: "Ukuran berkas struk maksimal 5 MB." };
+    if (!expenseId) {
+      return { success: false, error: "ID pengeluaran tidak valid." };
     }
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
-    if (!allowedTypes.includes(file.type)) {
-      return { success: false, error: "Format berkas harus berupa gambar (JPG, JPEG, PNG, atau WEBP)." };
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "Sesi telah berakhir. Silakan login kembali." };
     }
 
-    const fileExt = file.name.split(".").pop() || "jpg";
-    const filePath = `receipts/${expenseId}_${Date.now()}.${fileExt}`;
-
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      const { error: uploadError } = await supabase.storage
-        .from("transfer-proofs")
-        .upload(filePath, buffer, {
-          contentType: file.type,
-          upsert: true,
-        });
-
-      if (uploadError) {
-        return { success: false, error: `Gagal mengunggah foto struk: ${uploadError.message}` };
-      }
-
-      const { data: urlData } = supabase.storage
-        .from("transfer-proofs")
-        .getPublicUrl(filePath);
-
-      publicUrl = urlData.publicUrl;
-    } catch (err: any) {
-      return { success: false, error: err?.message || "Gagal memproses berkas gambar." };
-    }
-  }
-
-  const updatePayload: any = {
-    updated_at: new Date().toISOString(),
-  };
-  if (publicUrl) updatePayload.proof_image_url = publicUrl;
-  if (receiptNotes !== undefined) updatePayload.receipt_notes = receiptNotes;
-
-  const { error: updateError } = await supabase
-    .from("expenses")
-    .update(updatePayload)
-    .eq("id", expenseId);
-
-  if (updateError) {
-    // Fallback jika kolom proof_image_url belum dieksekusi di database Supabase:
-    // Simpan ke kolom description dengan metadata terstruktur agar aplikasi tetap berjalan 100%
-    const { data: currentExp } = await supabase
+    const { data: exp, error: expErr } = await supabase
       .from("expenses")
-      .select("description")
+      .select("id, group_id, title")
       .eq("id", expenseId)
       .single();
 
-    let baseDesc = currentExp?.description || "";
-    if (baseDesc.includes("__KASKOS_RECEIPT__")) {
-      baseDesc = baseDesc.split("__KASKOS_RECEIPT__")[0].trim();
+    if (expErr || !exp) {
+      return { success: false, error: "Data pengeluaran tidak ditemukan." };
     }
-    const receiptTag = `__KASKOS_RECEIPT__${JSON.stringify({ url: publicUrl, notes: receiptNotes })}`;
-    const newDescription = baseDesc ? `${baseDesc}\n${receiptTag}` : receiptTag;
 
-    const { error: fallbackUpdateErr } = await supabase
+    const isAdmin = await verifyGroupAdmin(supabase, exp.group_id, user.id);
+    if (!isAdmin) {
+      return { success: false, error: "Hanya koordinator kos yang berwenang mengunggah struk pembelian." };
+    }
+
+    let publicUrl: string | null = null;
+
+    if (file && file.size > 0) {
+      const MAX_FILE_SIZE = 5 * 1024 * 1024;
+      if (file.size > MAX_FILE_SIZE) {
+        return { success: false, error: "Ukuran berkas struk maksimal 5 MB." };
+      }
+
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+      if (!allowedTypes.includes(file.type)) {
+        return { success: false, error: "Format berkas harus berupa gambar (JPG, JPEG, PNG, atau WEBP)." };
+      }
+
+      const fileExt = file.name.split(".").pop() || "jpg";
+      const filePath = `receipts/${expenseId}_${Date.now()}.${fileExt}`;
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        const { error: uploadError } = await supabase.storage
+          .from("transfer-proofs")
+          .upload(filePath, buffer, {
+            contentType: file.type,
+            upsert: true,
+          });
+
+        if (uploadError) {
+          return { success: false, error: `Gagal mengunggah foto struk: ${uploadError.message}` };
+        }
+
+        const { data: urlData } = supabase.storage
+          .from("transfer-proofs")
+          .getPublicUrl(filePath);
+
+        publicUrl = urlData.publicUrl;
+      } catch (err: any) {
+        return { success: false, error: err?.message || "Gagal memproses berkas gambar." };
+      }
+    }
+
+    const updatePayload: any = {
+      updated_at: new Date().toISOString(),
+    };
+    if (publicUrl) updatePayload.proof_image_url = publicUrl;
+    if (receiptNotes !== undefined) updatePayload.receipt_notes = receiptNotes;
+
+    const { error: updateError } = await supabase
       .from("expenses")
-      .update({
-        description: newDescription,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq("id", expenseId);
 
-    if (fallbackUpdateErr) {
-      return {
-        success: false,
-        error: `Gagal menyimpan struk: ${fallbackUpdateErr.message}`,
-      };
-    }
-  }
+    if (updateError) {
+      // Fallback jika kolom proof_image_url belum dieksekusi di database Supabase:
+      // Simpan ke kolom description dengan metadata terstruktur agar aplikasi tetap berjalan 100%
+      const { data: currentExp } = await supabase
+        .from("expenses")
+        .select("description")
+        .eq("id", expenseId)
+        .single();
 
-  revalidatePath("/dashboard", "layout");
-  return {
-    success: true,
-    message: `Bukti struk pembelian untuk "${exp.title}" berhasil disimpan dan dapat dilihat oleh seluruh anggota kos!`,
-    proofImageUrl: publicUrl,
-    receiptNotes: receiptNotes || null,
-  };
+      let baseDesc = currentExp?.description || "";
+      if (baseDesc.includes("__KASKOS_RECEIPT__")) {
+        baseDesc = baseDesc.split("__KASKOS_RECEIPT__")[0].trim();
+      }
+      const receiptTag = `__KASKOS_RECEIPT__${JSON.stringify({ url: publicUrl, notes: receiptNotes })}`;
+      const newDescription = baseDesc ? `${baseDesc}\n${receiptTag}` : receiptTag;
+
+      const { error: fallbackUpdateErr } = await supabase
+        .from("expenses")
+        .update({
+          description: newDescription,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", expenseId);
+
+      if (fallbackUpdateErr) {
+        return {
+          success: false,
+          error: `Gagal menyimpan struk: ${fallbackUpdateErr.message}`,
+        };
+      }
+    }
+
+    try {
+      revalidatePath("/dashboard");
+    } catch {
+      // Abaikan jika context revalidate non-blocking
+    }
+
+    return {
+      success: true,
+      message: `Bukti struk pembelian untuk "${exp.title}" berhasil disimpan dan dapat dilihat oleh seluruh anggota kos!`,
+      proofImageUrl: publicUrl,
+      receiptNotes: receiptNotes || null,
+    };
+  } catch (topErr: any) {
+    return {
+      success: false,
+      error: topErr?.message || "Terjadi kesalahan internal saat memproses unggahan struk.",
+    };
+  }
 }
 
 /**

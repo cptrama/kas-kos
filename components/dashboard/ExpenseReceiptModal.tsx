@@ -89,24 +89,25 @@ export default function ExpenseReceiptModal({
       const res = await uploadExpenseReceiptAction(formData);
       setIsLoading(false);
 
-      if (!res.success) {
+      if (res && !res.success) {
         const errMsg = res.error || "Gagal mengunggah bukti struk.";
         setMessage({ type: "danger", text: errMsg });
-      } else {
-        setShowUploadForm(false);
-        setPreviewUrl(null);
-
-        if (onSuccess) {
-          onSuccess({
-            proofImageUrl: res.proofImageUrl || previewUrl,
-            receiptNotes: (formData.get("receipt_notes")?.toString().trim()) || null,
-            message: res.message || "Bukti struk pembelian berhasil disimpan dan dipublikasikan!",
-          });
-        }
-
-        // Langsung close ke halaman utama, tidak stay pada menu upload
-        onClose();
+        return;
       }
+
+      setShowUploadForm(false);
+      setPreviewUrl(null);
+
+      if (onSuccess) {
+        onSuccess({
+          proofImageUrl: res?.proofImageUrl || previewUrl,
+          receiptNotes: (formData.get("receipt_notes")?.toString().trim()) || null,
+          message: res?.message || "Bukti struk pembelian berhasil disimpan dan dipublikasikan!",
+        });
+      }
+
+      // Langsung close ke halaman utama, tidak stay pada menu upload
+      onClose();
     } catch (err: any) {
       setIsLoading(false);
       const errMsg = err?.message || "Terjadi kendala jaringan saat mengunggah.";
