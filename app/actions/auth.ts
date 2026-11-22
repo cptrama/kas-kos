@@ -28,6 +28,7 @@ export async function signUpAction(formData: FormData): Promise<AuthResponse> {
   }
 
   const supabase = await createClient();
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -37,6 +38,7 @@ export async function signUpAction(formData: FormData): Promise<AuthResponse> {
         full_name: fullName,
         phone_number: phoneNumber,
       },
+      emailRedirectTo: `${siteUrl}/auth/callback?next=/login`,
     },
   });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { signInAction } from "@/app/actions/auth";
@@ -12,14 +12,41 @@ import {
   IconEye,
   IconEyeOff,
   IconAlertCircle,
+  IconCheck,
   IconArrowLeft,
   IconShieldLock,
 } from "@tabler/icons-react";
 
 export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      // Ambil email & kata sandi yang tersimpan saat pendaftaran
+      const savedAuthStr = localStorage.getItem("kaskos_saved_auth");
+      if (savedAuthStr) {
+        const saved = JSON.parse(savedAuthStr);
+        if (saved?.email) setEmail(saved.email);
+        if (saved?.password) setPassword(saved.password);
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("confirmed") === "true") {
+        setSuccessMessage(
+          "Email Anda berhasil dikonfirmasi! Alamat email dan kata sandi Anda telah terisi otomatis. Silakan langsung klik Masuk ke Dashboard."
+        );
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -31,9 +58,17 @@ export default function LoginPage() {
       const result = await signInAction(formData);
       if (result && !result.success && result.error) {
         setErrorMessage(result.error);
+      } else {
+        // Hapus kredensial tersimpan setelah berhasil masuk
+        try {
+          localStorage.removeItem("kaskos_saved_auth");
+        } catch {}
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) {
+        try {
+          localStorage.removeItem("kaskos_saved_auth");
+        } catch {}
         return;
       }
       setErrorMessage("Terjadi kendala saat mencoba masuk. Silakan periksa kembali email & kata sandi Anda.");
@@ -66,6 +101,15 @@ export default function LoginPage() {
               Masuk untuk memantau kas kamar kos Anda
             </p>
 
+            {/* Success Message Alert (Konfirmasi Email) */}
+            {successMessage && (
+              <div className="alert alert-success alert-dismissible d-flex align-items-start gap-2 mb-3 shadow-sm border-success" role="alert">
+                <IconCheck size={20} className="text-success flex-shrink-0 mt-1" />
+                <div className="small">{successMessage}</div>
+                <button type="button" className="btn-close" onClick={() => setSuccessMessage(null)}></button>
+              </div>
+            )}
+
             {/* Error Message Alert */}
             {errorMessage && (
               <div className="alert alert-danger alert-dismissible d-flex align-items-start gap-2 mb-3" role="alert">
@@ -88,6 +132,8 @@ export default function LoginPage() {
                     type="email"
                     name="email"
                     required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="form-control ps-1"
                     placeholder="nama@email.com"
                     autoComplete="email"
@@ -110,6 +156,8 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     name="password"
                     required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="form-control ps-1"
                     placeholder="Masukkan kata sandi akun"
                     autoComplete="current-password"

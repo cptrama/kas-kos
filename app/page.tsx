@@ -1,5 +1,6 @@
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
+import AuthRedirectDetector from "@/components/AuthRedirectDetector";
 import {
   IconBolt,
   IconWifi,
@@ -25,6 +26,7 @@ import {
 export default function HomePage() {
   return (
     <div className="page bg-white" data-bs-theme="light">
+      <AuthRedirectDetector />
       {/* Top Navigation */}
       <header className="navbar navbar-expand-md navbar-light sticky-top bg-white border-bottom shadow-xs">
         <div className="container-xl">

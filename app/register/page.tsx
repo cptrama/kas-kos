@@ -32,6 +32,18 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     const formData = new FormData(event.currentTarget);
+    const email = formData.get("email")?.toString().trim();
+    const password = formData.get("password")?.toString();
+
+    // Simpan email & sandi di storage lokal agar otomatis terisi saat konfirmasi email
+    if (typeof window !== "undefined" && email && password) {
+      try {
+        localStorage.setItem("kaskos_saved_auth", JSON.stringify({ email, password }));
+      } catch {
+        // ignore storage error
+      }
+    }
+
     try {
       const result = await signUpAction(formData);
       if (result && !result.success && result.error) {
