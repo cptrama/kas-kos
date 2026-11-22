@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
 import { signUpAction } from "@/app/actions/auth";
 import {
   IconWallet,
@@ -31,6 +32,18 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     const formData = new FormData(event.currentTarget);
+    const email = formData.get("email")?.toString().trim();
+    const password = formData.get("password")?.toString();
+
+    // Simpan email & sandi di storage lokal agar otomatis terisi saat konfirmasi email
+    if (typeof window !== "undefined" && email && password) {
+      try {
+        localStorage.setItem("kaskos_saved_auth", JSON.stringify({ email, password }));
+      } catch {
+        // ignore storage error
+      }
+    }
+
     try {
       const result = await signUpAction(formData);
       if (result && !result.success && result.error) {
@@ -53,14 +66,9 @@ export default function RegisterPage() {
       <div className="container container-tight py-4" style={{ maxWidth: "480px" }}>
         {/* Brand Header */}
         <div className="text-center mb-4">
-          <Link href="/" className="navbar-brand d-inline-flex align-items-center gap-2 text-decoration-none">
-            <span className="badge bg-teal text-white p-2 rounded-circle shadow-sm">
-              <IconWallet size={24} stroke={2.5} />
-            </span>
-            <span className="fs-1 fw-bold text-dark">
-              Kas<span className="text-teal">Kos</span>
-            </span>
-          </Link>
+          <div className="mb-2">
+            <BrandLogo href="/" size={52} />
+          </div>
           <p className="text-muted small mt-2">
             Mulai kelola uang patungan kos tanpa selisih dan tanpa drama
           </p>
@@ -100,14 +108,14 @@ export default function RegisterPage() {
                   Nama Lengkap <span className="text-danger">*</span>
                 </label>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text bg-white border-end-0">
+                  <span className="input-group-text ps-3">
                     <IconUser size={18} className="text-muted" />
                   </span>
                   <input
                     type="text"
                     name="full_name"
                     required
-                    className="form-control ps-1"
+                    className="form-control"
                     placeholder="Contoh: Budi Santoso"
                     autoComplete="name"
                   />
@@ -123,13 +131,13 @@ export default function RegisterPage() {
                   <span className="text-muted small" style={{ fontSize: "11px" }}>Opsional</span>
                 </div>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text bg-white border-end-0">
+                  <span className="input-group-text ps-3">
                     <IconPhone size={18} className="text-muted" />
                   </span>
                   <input
                     type="tel"
                     name="phone_number"
-                    className="form-control ps-1"
+                    className="form-control"
                     placeholder="Contoh: 081234567890"
                     autoComplete="tel"
                   />
@@ -145,14 +153,14 @@ export default function RegisterPage() {
                   Alamat Email <span className="text-danger">*</span>
                 </label>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text bg-white border-end-0">
+                  <span className="input-group-text ps-3">
                     <IconMail size={18} className="text-muted" />
                   </span>
                   <input
                     type="email"
                     name="email"
                     required
-                    className="form-control ps-1"
+                    className="form-control"
                     placeholder="nama@email.com"
                     autoComplete="email"
                   />
@@ -165,7 +173,7 @@ export default function RegisterPage() {
                   Kata Sandi <span className="text-danger">*</span>
                 </label>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text bg-white border-end-0">
+                  <span className="input-group-text ps-3">
                     <IconLock size={18} className="text-muted" />
                   </span>
                   <input
@@ -173,11 +181,11 @@ export default function RegisterPage() {
                     name="password"
                     required
                     minLength={6}
-                    className="form-control ps-1"
+                    className="form-control"
                     placeholder="Minimal 6 karakter"
                     autoComplete="new-password"
                   />
-                  <span className="input-group-text bg-white border-start-0 pe-2">
+                  <span className="input-group-text pe-3">
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}

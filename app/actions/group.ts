@@ -81,6 +81,12 @@ export async function createGroupAction(formData: FormData): Promise<GroupRespon
     .single();
 
   if (groupError || !newGroup) {
+    if (groupError?.message?.toLowerCase().includes("permission denied")) {
+      return {
+        success: false,
+        error: "Izin tabel belum diberikan di Supabase (permission denied for table groups). Silakan jalankan skrip fix_rls_policies.sql di Supabase SQL Editor.",
+      };
+    }
     return { success: false, error: groupError?.message || "Gagal membuat grup kos." };
   }
 

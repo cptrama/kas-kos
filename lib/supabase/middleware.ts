@@ -66,7 +66,11 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Jika sudah login dan membuka halaman login/register, arahkan ke dashboard
+  // Kecuali jika ada parameter confirmed=true (konfirmasi email), biarkan pengguna di halaman login
   if (user && (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/register")) {
+    if (request.nextUrl.searchParams.get("confirmed") === "true") {
+      return response;
+    }
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

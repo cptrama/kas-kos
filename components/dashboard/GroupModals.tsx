@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createGroupAction, joinGroupByCodeAction, updateGroupPaymentInfoAction } from "@/app/actions/group";
-import { IconPlus, IconDoorEnter, IconSettings, IconCopy, IconCheck, IconBuildingCommunity } from "@tabler/icons-react";
+import { IconPlus, IconDoorEnter, IconSettings, IconCopy, IconCheck, IconBuildingCommunity, IconAlertCircle } from "@tabler/icons-react";
 
 interface GroupModalsProps {
   activeGroup?: {
@@ -22,69 +22,140 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
   const [showSettings, setShowSettings] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "danger"; text: string } | null>(null);
+  
+  // Floating Toast Notification state (Pop-up mengambang 3-6 detik)
+  const [toast, setToast] = useState<{ type: "success" | "danger" | "info"; message: string } | null>(null);
+  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  function triggerToast(type: "success" | "danger" | "info", msg: string) {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast({ type, message: msg });
+    // Muncul selama 4.5 detik (sesuai permintaan 3 - 6 detik)
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+    }, 4500);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
 
   function copyInviteCode() {
     if (!activeGroup?.invite_code) return;
     navigator.clipboard.writeText(activeGroup.invite_code);
     setIsCopied(true);
+    triggerToast("success", "Kode invite berhasil disalin ke clipboard!");
     setTimeout(() => setIsCopied(false), 2000);
   }
 
   async function handleCreateGroup(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
-    setMessage(null);
     const formData = new FormData(e.currentTarget);
     const res = await createGroupAction(formData);
     setIsLoading(false);
     if (!res.success) {
-      setMessage({ type: "danger", text: res.error || "Gagal membuat grup." });
+      triggerToast("danger", res.error || "Gagal membuat grup.");
     } else {
       setShowCreate(false);
-      setMessage({ type: "success", text: "Grup kos berhasil dibuat!" });
+      triggerToast("success", "Grup kos baru berhasil dibuat!");
     }
   }
 
   async function handleJoinGroup(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
-    setMessage(null);
     const formData = new FormData(e.currentTarget);
     const res = await joinGroupByCodeAction(formData);
     setIsLoading(false);
     if (!res.success) {
-      setMessage({ type: "danger", text: res.error || "Gagal bergabung." });
+      triggerToast("danger", res.error || "Gagal bergabung ke grup.");
     } else {
       setShowJoin(false);
-      setMessage({ type: "success", text: res.message || "Berhasil bergabung!" });
+      triggerToast("success", res.message || "Berhasil bergabung ke grup!");
     }
   }
 
   async function handleUpdateSettings(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
-    setMessage(null);
     const formData = new FormData(e.currentTarget);
     const res = await updateGroupPaymentInfoAction(formData);
     setIsLoading(false);
     if (!res.success) {
-      setMessage({ type: "danger", text: res.error || "Gagal memperbarui rekening." });
+      triggerToast("danger", res.error || "Gagal memperbarui rekening.");
     } else {
       setShowSettings(false);
-      setMessage({ type: "success", text: "Rekening kas berhasil diperbarui!" });
+      triggerToast("success", "Rekening kas berhasil diperbarui!");
     }
   }
 
   return (
     <>
-      {/* Alert Notifikasi */}
-      {message && (
-        <div className={`alert alert-${message.type} alert-dismissible mb-4`} role="alert">
-          <div className="d-flex justify-content-between align-items-center">
-            <div>{message.text}</div>
-            <button type="button" className="btn-close" onClick={() => setMessage(null)}></button>
+      {/* Floating Pop-up Notification (Toast Mengambang di Depan Layar 3-6 Detik) */}
+      {toast && (
+        <div
+          style={{
+            position: "fixed",
+            top: "24px",
+            right: "24px",
+            zIndex: 99999,
+            maxWidth: "420px",
+            width: "calc(100% - 48px)",
+            backgroundColor: toast.type === "success" ? "#0ca678" : toast.type === "danger" ? "#d63939" : "#206bc4",
+            color: "#ffffff",
+            borderRadius: "12px",
+            boxShadow: "0 12px 30px rgba(0, 0, 0, 0.35), 0 4px 10px rgba(0, 0, 0, 0.15)",
+            overflow: "hidden",
+            animation: "toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+          }}
+          role="alert"
+        >
+          <div className="d-flex align-items-center p-3">
+            <div className="me-3 flex-shrink-0">
+              <div
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "50%",
+                  backgroundColor: "rgba(255, 255, 255, 0.22)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {toast.type === "success" ? (
+                  <IconCheck size={20} color="#fff" />
+                ) : (
+                  <IconAlertCircle size={20} color="#fff" />
+                )}
+              </div>
+            </div>
+            <div className="flex-grow-1 text-white pe-2">
+              <div className="fw-bold small lh-1 mb-1">
+                {toast.type === "success" ? "Berhasil!" : "Pemberitahuan"}
+              </div>
+              <div className="small lh-sm" style={{ opacity: 0.95 }}>
+                {toast.message}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn-close btn-close-white flex-shrink-0"
+              onClick={() => setToast(null)}
+              aria-label="Tutup"
+            ></button>
           </div>
+          {/* Progress bar hitung mundur 4.5 detik */}
+          <div
+            style={{
+              height: "4px",
+              backgroundColor: "rgba(255, 255, 255, 0.4)",
+              animation: "toastProgress 4.5s linear forwards",
+            }}
+          />
         </div>
       )}
 
@@ -139,15 +210,15 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
 
       {/* Modal: Buat Grup Kos */}
       {showCreate && (
-        <div className="modal modal-blur fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <div className="modal modal-blur fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1055 }}>
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
+            <div className="modal-content shadow-lg border-0">
+              <div className="modal-header border-bottom">
                 <h5 className="modal-title fw-bold">Buat Grup Kamar Kos Baru</h5>
-                <button type="button" className="btn-close" onClick={() => setShowCreate(false)}></button>
+                <button type="button" className="btn-close" onClick={() => setShowCreate(false)} disabled={isLoading}></button>
               </div>
               <form onSubmit={handleCreateGroup}>
-                <div className="modal-body">
+                <div className="modal-body p-4">
                   <div className="mb-3">
                     <label className="form-label required">Nama Grup Kos / Kontrakan</label>
                     <input
@@ -197,8 +268,8 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
                     />
                   </div>
                 </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowCreate(false)}>
+                <div className="modal-footer border-top">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowCreate(false)} disabled={isLoading}>
                     Batal
                   </button>
                   <button type="submit" disabled={isLoading} className="btn btn-teal">
@@ -213,15 +284,15 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
 
       {/* Modal: Gabung Grup via Kode */}
       {showJoin && (
-        <div className="modal modal-blur fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <div className="modal modal-blur fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1055 }}>
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
+            <div className="modal-content shadow-lg border-0">
+              <div className="modal-header border-bottom">
                 <h5 className="modal-title fw-bold">Gabung ke Grup Kos</h5>
-                <button type="button" className="btn-close" onClick={() => setShowJoin(false)}></button>
+                <button type="button" className="btn-close" onClick={() => setShowJoin(false)} disabled={isLoading}></button>
               </div>
               <form onSubmit={handleJoinGroup}>
-                <div className="modal-body">
+                <div className="modal-body p-4">
                   <div className="mb-3">
                     <label className="form-label required">Masukkan Kode Undangan 6-Karakter</label>
                     <input
@@ -237,8 +308,8 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
                     </small>
                   </div>
                 </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowJoin(false)}>
+                <div className="modal-footer border-top">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowJoin(false)} disabled={isLoading}>
                     Batal
                   </button>
                   <button type="submit" disabled={isLoading} className="btn btn-teal">
@@ -253,16 +324,16 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
 
       {/* Modal: Atur Rekening Kas */}
       {showSettings && activeGroup && (
-        <div className="modal modal-blur fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <div className="modal modal-blur fade show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1055 }}>
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
+            <div className="modal-content shadow-lg border-0">
+              <div className="modal-header border-bottom">
                 <h5 className="modal-title fw-bold">Pengaturan Rekening Tujuan Transfer</h5>
-                <button type="button" className="btn-close" onClick={() => setShowSettings(false)}></button>
+                <button type="button" className="btn-close" onClick={() => setShowSettings(false)} disabled={isLoading}></button>
               </div>
               <form onSubmit={handleUpdateSettings}>
                 <input type="hidden" name="group_id" value={activeGroup.id} />
-                <div className="modal-body">
+                <div className="modal-body p-4">
                   <p className="text-muted small mb-3">
                     Informasi ini akan muncul di dashboard anggota saat mereka akan mentransfer uang kas bersama.
                   </p>
@@ -300,8 +371,8 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
                     />
                   </div>
                 </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowSettings(false)}>
+                <div className="modal-footer border-top">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowSettings(false)} disabled={isLoading}>
                     Batal
                   </button>
                   <button type="submit" disabled={isLoading} className="btn btn-teal">

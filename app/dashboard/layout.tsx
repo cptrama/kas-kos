@@ -1,6 +1,8 @@
 import { getCurrentUserProfile, signOutAction } from "@/app/actions/auth";
 import Link from "next/link";
-import { IconWallet, IconUser, IconLogout } from "@tabler/icons-react";
+import { IconUser, IconLogout } from "@tabler/icons-react";
+import ThemeToggle from "@/components/ThemeToggle";
+import BrandLogo from "@/components/BrandLogo";
 
 export default async function DashboardLayout({
   children,
@@ -14,16 +16,11 @@ export default async function DashboardLayout({
       {/* Top Navbar */}
       <header className="navbar navbar-expand-md navbar-light bg-white border-bottom sticky-top">
         <div className="container-xl">
-          <Link href="/dashboard" className="navbar-brand d-flex align-items-center gap-2">
-            <span className="badge bg-green text-white p-2 rounded-circle">
-              <IconWallet size={20} stroke={2} />
-            </span>
-            <span className="fs-2 fw-bold text-dark">
-              Kas<span className="text-teal">Kos</span>
-            </span>
-          </Link>
+          <BrandLogo href="/dashboard" size={42} />
 
           <div className="navbar-nav flex-row order-md-last align-items-center gap-3">
+            <ThemeToggle />
+
             <div className="d-flex align-items-center gap-2">
               <span className="avatar avatar-sm bg-green-lt rounded-circle">
                 <IconUser size={18} />

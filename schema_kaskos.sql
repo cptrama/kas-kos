@@ -129,6 +129,18 @@ CREATE INDEX IF NOT EXISTS idx_bill_items_expense ON public.bill_items(expense_i
 CREATE INDEX IF NOT EXISTS idx_groups_invite_code ON public.groups(invite_code);
 
 -- ==============================================================================
+-- 7.5 HAK AKSES DASAR (GRANT PRIVILEGES)
+-- ==============================================================================
+GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO postgres, anon, authenticated, service_role;
+
+-- ==============================================================================
 -- 8. ROW LEVEL SECURITY (RLS) POLICIES
 -- Keamanan data agar anggota hanya melihat grup & tagihan miliknya sendiri
 -- ==============================================================================
@@ -150,41 +162,36 @@ CREATE POLICY "Pengguna hanya dapat mengedit profilnya sendiri"
     USING (auth.uid() = id);
 
 -- 8.2 GROUPS POLICIES
-CREATE POLICY "Pengguna dapat melihat grup tempat ia menjadi anggota"
+CREATE POLICY "Pengguna terautentikasi dapat melihat grup"
     ON public.groups FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.group_members gm
-            WHERE gm.group_id = groups.id AND gm.user_id = auth.uid()
-        )
-    );
+    TO authenticated
+    USING (true);
 
-CREATE POLICY "Pengguna terautentikasi dapat membuat grup baru"
+CREATE POLICY "Pengguna terautentikasi dapat membuat grup"
     ON public.groups FOR INSERT
-    WITH CHECK (auth.role() = 'authenticated');
+    TO authenticated
+    WITH CHECK (auth.uid() = created_by);
 
-CREATE POLICY "Hanya Admin Grup yang dapat mengubah info grup"
+CREATE POLICY "Admin dapat mengupdate info grup"
     ON public.groups FOR UPDATE
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.group_members gm
-            WHERE gm.group_id = groups.id AND gm.user_id = auth.uid() AND gm.role = 'admin_grup'
-        )
-    );
+    TO authenticated
+    USING (created_by = auth.uid());
 
 -- 8.3 GROUP MEMBERS POLICIES
-CREATE POLICY "Anggota dapat melihat daftar member di grupnya"
+CREATE POLICY "Pengguna terautentikasi dapat melihat anggota grup"
     ON public.group_members FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.group_members gm
-            WHERE gm.group_id = group_members.group_id AND gm.user_id = auth.uid()
-        )
-    );
+    TO authenticated
+    USING (true);
 
 CREATE POLICY "Pengguna dapat bergabung ke grup"
     ON public.group_members FOR INSERT
+    TO authenticated
     WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Pengguna dapat keluar dari grup"
+    ON public.group_members FOR DELETE
+    TO authenticated
+    USING (auth.uid() = user_id);
 
 -- 8.4 EXPENSES POLICIES
 CREATE POLICY "Anggota grup dapat melihat pengeluaran kos"

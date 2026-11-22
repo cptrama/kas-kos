@@ -28,6 +28,7 @@ export async function signUpAction(formData: FormData): Promise<AuthResponse> {
   }
 
   const supabase = await createClient();
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -37,10 +38,18 @@ export async function signUpAction(formData: FormData): Promise<AuthResponse> {
         full_name: fullName,
         phone_number: phoneNumber,
       },
+      emailRedirectTo: `${siteUrl}/auth/callback?next=/login`,
     },
   });
 
   if (error) {
+    if (error.message.toLowerCase().includes("rate limit")) {
+      return {
+        success: false,
+        error:
+          "Batas pengiriman email verifikasi dari server Supabase telah tercapai untuk jam ini (maksimal 3-4 email per jam pada akun gratis). Untuk pengujian leluasa, Anda dapat menonaktifkan opsi 'Confirm email' di Supabase Dashboard -> Authentication -> Providers -> Email.",
+      };
+    }
     return { success: false, error: error.message };
   }
 

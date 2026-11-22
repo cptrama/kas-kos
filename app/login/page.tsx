@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
 import { signInAction } from "@/app/actions/auth";
 import {
   IconWallet,
@@ -11,14 +12,41 @@ import {
   IconEye,
   IconEyeOff,
   IconAlertCircle,
+  IconCheck,
   IconArrowLeft,
   IconShieldLock,
 } from "@tabler/icons-react";
 
 export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      // Ambil email & kata sandi yang tersimpan saat pendaftaran
+      const savedAuthStr = localStorage.getItem("kaskos_saved_auth");
+      if (savedAuthStr) {
+        const saved = JSON.parse(savedAuthStr);
+        if (saved?.email) setEmail(saved.email);
+        if (saved?.password) setPassword(saved.password);
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("confirmed") === "true") {
+        setSuccessMessage(
+          "Email Anda berhasil dikonfirmasi! Alamat email dan kata sandi Anda telah terisi otomatis. Silakan langsung klik Masuk ke Dashboard."
+        );
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,9 +58,17 @@ export default function LoginPage() {
       const result = await signInAction(formData);
       if (result && !result.success && result.error) {
         setErrorMessage(result.error);
+      } else {
+        // Hapus kredensial tersimpan setelah berhasil masuk
+        try {
+          localStorage.removeItem("kaskos_saved_auth");
+        } catch {}
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) {
+        try {
+          localStorage.removeItem("kaskos_saved_auth");
+        } catch {}
         return;
       }
       setErrorMessage("Terjadi kendala saat mencoba masuk. Silakan periksa kembali email & kata sandi Anda.");
@@ -46,14 +82,9 @@ export default function LoginPage() {
       <div className="container container-tight py-4" style={{ maxWidth: "440px" }}>
         {/* Brand Header */}
         <div className="text-center mb-4">
-          <Link href="/" className="navbar-brand d-inline-flex align-items-center gap-2 text-decoration-none">
-            <span className="badge bg-teal text-white p-2 rounded-circle shadow-sm">
-              <IconWallet size={24} stroke={2.5} />
-            </span>
-            <span className="fs-1 fw-bold text-dark">
-              Kas<span className="text-teal">Kos</span>
-            </span>
-          </Link>
+          <div className="mb-2">
+            <BrandLogo href="/" size={52} />
+          </div>
           <p className="text-muted small mt-2">
             Kelola kas dan tagihan bersama tanpa rasa sungkan
           </p>
@@ -70,6 +101,15 @@ export default function LoginPage() {
               Masuk untuk memantau kas kamar kos Anda
             </p>
 
+            {/* Success Message Alert (Konfirmasi Email) */}
+            {successMessage && (
+              <div className="alert alert-success alert-dismissible d-flex align-items-start gap-2 mb-3 shadow-sm border-success" role="alert">
+                <IconCheck size={20} className="text-success flex-shrink-0 mt-1" />
+                <div className="small">{successMessage}</div>
+                <button type="button" className="btn-close" onClick={() => setSuccessMessage(null)}></button>
+              </div>
+            )}
+
             {/* Error Message Alert */}
             {errorMessage && (
               <div className="alert alert-danger alert-dismissible d-flex align-items-start gap-2 mb-3" role="alert">
@@ -85,14 +125,16 @@ export default function LoginPage() {
                   Alamat Email <span className="text-danger">*</span>
                 </label>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text bg-white border-end-0">
+                  <span className="input-group-text ps-3">
                     <IconMail size={18} className="text-muted" />
                   </span>
                   <input
                     type="email"
                     name="email"
                     required
-                    className="form-control ps-1"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="form-control"
                     placeholder="nama@email.com"
                     autoComplete="email"
                   />
@@ -107,18 +149,20 @@ export default function LoginPage() {
                   </label>
                 </div>
                 <div className="input-group input-group-flat">
-                  <span className="input-group-text bg-white border-end-0">
+                  <span className="input-group-text ps-3">
                     <IconLock size={18} className="text-muted" />
                   </span>
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
                     required
-                    className="form-control ps-1"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="form-control"
                     placeholder="Masukkan kata sandi akun"
                     autoComplete="current-password"
                   />
-                  <span className="input-group-text bg-white border-start-0 pe-2">
+                  <span className="input-group-text pe-3">
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}

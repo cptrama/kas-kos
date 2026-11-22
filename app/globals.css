@@ -9,6 +9,11 @@
 
 body {
   font-family: var(--tblr-font-sans-serif);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Light mode defaults */
+body.bg-light {
   background-color: #f8fafc;
   color: #1e293b;
 }
@@ -19,6 +24,31 @@ body {
 
 .bg-brand-emerald {
   background-color: #0ca678;
+}
+
+/* Modern Typography for Brand Logo */
+.brand-logo-text {
+  font-family: var(--tblr-font-sans-serif);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-size: 1.55rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.brand-logo-text .kas-part {
+  color: #0f172a;
+  transition: color 0.2s ease;
+}
+
+.brand-logo-text .kos-part {
+  color: #0ca678;
+}
+
+[data-bs-theme="dark"] .brand-logo-text .kas-part,
+.theme-dark .brand-logo-text .kas-part {
+  color: #f8fafc !important;
 }
 
 /* Tabler style enhancements for KasKos */
@@ -44,5 +74,301 @@ body {
 
 .card {
   border-radius: 0.75rem;
-  border-color: #e2e8f0;
+}
+
+/* ==============================================================================
+   DASHBOARD CANVAS & CARD ELEVATION (Kontras Jelas Light & Dark Mode)
+   ============================================================================== */
+
+/* Light Mode Canvas & Card */
+.page {
+  background-color: #f1f5f9 !important;
+  color: #1e293b;
+}
+
+/* Tetap pertahankan background landing page putih murni */
+.page.bg-white {
+  background-color: #ffffff !important;
+}
+
+.navbar {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.card {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.card:hover {
+  box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* ==============================================================================
+   DARK MODE ENHANCEMENTS (Tabler Compatible)
+   ============================================================================== */
+[data-bs-theme="dark"],
+.theme-dark {
+  --tblr-body-bg: #090e1a;
+  --tblr-body-color: #f8fafc;
+  --tblr-card-bg: #172337;
+  --tblr-card-border-color: rgba(255, 255, 255, 0.12);
+  color-scheme: dark;
+}
+
+[data-bs-theme="dark"] body,
+body.theme-dark {
+  background-color: #090e1a !important;
+  color: #f8fafc;
+}
+
+[data-bs-theme="dark"] .page,
+.theme-dark .page {
+  background-color: #090e1a !important;
+}
+
+[data-bs-theme="dark"] .bg-white,
+.theme-dark .bg-white {
+  background-color: #172337 !important;
+  color: #f8fafc;
+}
+
+[data-bs-theme="dark"] .bg-light,
+.theme-dark .bg-light {
+  background-color: #0f172a !important;
+}
+
+[data-bs-theme="dark"] .card,
+.theme-dark .card {
+  background-color: #172337 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  color: #f8fafc !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 4px 10px -2px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-bs-theme="dark"] .card:hover,
+.theme-dark .card:hover {
+  border-color: rgba(12, 166, 120, 0.5) !important;
+  box-shadow: 0 14px 28px -5px rgba(0, 0, 0, 0.7), 0 6px 12px -2px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-bs-theme="dark"] .navbar,
+.theme-dark .navbar {
+  background-color: #111a2e !important;
+  border-color: #243248 !important;
+}
+
+[data-bs-theme="dark"] .modal-content,
+.theme-dark .modal-content {
+  background-color: #172337 !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.8) !important;
+}
+
+[data-bs-theme="dark"] .modal-header,
+[data-bs-theme="dark"] .modal-footer,
+.theme-dark .modal-header,
+.theme-dark .modal-footer {
+  background-color: #172337 !important;
+  border-color: #243248 !important;
+}
+
+[data-bs-theme="dark"] .table,
+.theme-dark .table {
+  color: #f8fafc !important;
+  border-color: #243248 !important;
+}
+
+[data-bs-theme="dark"] .table > :not(caption) > * > *,
+.theme-dark .table > :not(caption) > * > * {
+  border-bottom-color: #243248 !important;
+  color: #f8fafc;
+}
+
+/* ==============================================================================
+   FORM CONTROLS & SEAMLESS INPUT GROUPS (Pembersihan Background & Autofill)
+   ============================================================================== */
+
+/* Hilangkan background patch/blok autofill bawaan browser (Chrome/Edge/Safari) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active,
+select:-webkit-autofill,
+textarea:-webkit-autofill {
+  -webkit-text-fill-color: inherit !important;
+  transition: background-color 9999999s ease-in-out 0s, color 9999999s ease-in-out 0s !important;
+}
+
+/* Seamless Unified Input Group (Tidak ada sekat, border vertikal, atau beda background) */
+.input-group-flat {
+  background-color: #ffffff !important;
+  border: 1px solid #dce1e7 !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.input-group-flat:hover {
+  border-color: #94a3b8 !important;
+}
+
+.input-group-flat:focus-within {
+  border-color: #0ca678 !important;
+  box-shadow: 0 0 0 3px rgba(12, 166, 120, 0.18) !important;
+}
+
+/* Hilangkan secara total garis batas di antara elemen dalam input-group-flat baik saat normal, hover, maupun focus */
+.input-group-flat > *,
+.input-group-flat > *:hover,
+.input-group-flat > *:focus,
+.input-group-flat > *:focus-within,
+.input-group-flat .form-control,
+.input-group-flat .form-control:focus,
+.input-group-flat .form-control:hover,
+.input-group-flat .form-control:active,
+.input-group-flat .input-group-text,
+.input-group-flat .input-group-text:focus,
+.input-group-flat .input-group-text:hover,
+.input-group-flat button,
+.input-group-flat button:focus {
+  border: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background-color: transparent !important;
+}
+
+.input-group-flat .input-group-text {
+  color: #64748b;
+}
+
+.input-group-flat .form-control {
+  padding-left: 0.5rem;
+}
+
+.form-control,
+.form-select {
+  border-radius: 8px;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #0ca678 !important;
+  box-shadow: 0 0 0 3px rgba(12, 166, 120, 0.15) !important;
+}
+
+[data-bs-theme="dark"] .input-group-flat,
+.theme-dark .input-group-flat {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .input-group-flat:hover,
+.theme-dark .input-group-flat:hover {
+  border-color: #475569 !important;
+}
+
+[data-bs-theme="dark"] .input-group-flat:focus-within,
+.theme-dark .input-group-flat:focus-within {
+  border-color: #0ca678 !important;
+  box-shadow: 0 0 0 3px rgba(12, 166, 120, 0.25) !important;
+}
+
+[data-bs-theme="dark"] .input-group-flat .input-group-text,
+.theme-dark .input-group-flat .input-group-text {
+  color: #94a3b8 !important;
+  background-color: transparent !important;
+}
+
+[data-bs-theme="dark"] input:-webkit-autofill,
+[data-bs-theme="dark"] input:-webkit-autofill:hover, 
+[data-bs-theme="dark"] input:-webkit-autofill:focus, 
+[data-bs-theme="dark"] input:-webkit-autofill:active,
+.theme-dark input:-webkit-autofill,
+.theme-dark input:-webkit-autofill:hover, 
+.theme-dark input:-webkit-autofill:focus, 
+.theme-dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .bg-light,
+.theme-dark .bg-light {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select,
+.theme-dark .form-control,
+.theme-dark .form-select {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .form-control:focus,
+[data-bs-theme="dark"] .form-select:focus,
+.theme-dark .form-control:focus,
+.theme-dark .form-select:focus {
+  background-color: #0f172a !important;
+  border-color: #0ca678 !important;
+  color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .text-dark,
+.theme-dark .text-dark {
+  color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .border-bottom,
+[data-bs-theme="dark"] .border-top,
+[data-bs-theme="dark"] .border,
+.theme-dark .border-bottom,
+.theme-dark .border-top,
+.theme-dark .border {
+  border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .text-secondary,
+[data-bs-theme="dark"] .text-muted,
+.theme-dark .text-secondary,
+.theme-dark .text-muted {
+  color: #94a3b8 !important;
+}
+
+[data-bs-theme="dark"] .card-table tr td,
+.theme-dark .card-table tr td {
+  border-color: #334155 !important;
+}
+
+/* Floating Pop-up Toast Animations */
+@keyframes toastSlideIn {
+  from {
+    transform: translateY(-24px) scale(0.94);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes toastProgress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
 }

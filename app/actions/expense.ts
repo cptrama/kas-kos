@@ -162,10 +162,11 @@ export async function createExpenseWithSplitAction(formData: FormData): Promise<
   const { error: billError } = await supabase.from("bill_items").insert(billItemsPayload);
 
   if (billError) {
+    // Bersihkan record pengeluaran yang terlanjur tersimpan agar tidak ada data yatim/orphan
+    await supabase.from("expenses").delete().eq("id", newExpense.id);
     return {
       success: false,
-      error: `Pengeluaran tersimpan, namun gagal membagi tagihan: ${billError.message}`,
-      expenseId: newExpense.id,
+      error: `Gagal membagi tagihan ke anggota kos: ${billError.message}. Silakan jalankan skrip fix_bill_items_rls.sql di Supabase SQL Editor.`,
     };
   }
 
