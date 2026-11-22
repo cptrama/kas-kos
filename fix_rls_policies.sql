@@ -138,14 +138,31 @@ DROP POLICY IF EXISTS "Anggota dapat melihat tagihan miliknya atau tagihan grupn
 DROP POLICY IF EXISTS "Anggota dapat mengupdate konfirmasi bayar miliknya" ON public.bill_items;
 DROP POLICY IF EXISTS "Pengguna terautentikasi dapat melihat tagihan" ON public.bill_items;
 DROP POLICY IF EXISTS "Pengguna terautentikasi dapat mengelola tagihan" ON public.bill_items;
+DROP POLICY IF EXISTS "Pengguna terautentikasi dapat membuat tagihan" ON public.bill_items;
+DROP POLICY IF EXISTS "Pengguna terautentikasi dapat mengupdate tagihan" ON public.bill_items;
+DROP POLICY IF EXISTS "Pengguna terautentikasi dapat menghapus tagihan" ON public.bill_items;
 
 CREATE POLICY "Pengguna terautentikasi dapat melihat tagihan"
     ON public.bill_items FOR SELECT
     TO authenticated
     USING (true);
 
-CREATE POLICY "Pengguna terautentikasi dapat mengelola tagihan"
-    ON public.bill_items FOR ALL
+CREATE POLICY "Pengguna terautentikasi dapat membuat tagihan"
+    ON public.bill_items FOR INSERT
+    TO authenticated
+    WITH CHECK (true);
+
+CREATE POLICY "Pengguna terautentikasi dapat mengupdate tagihan"
+    ON public.bill_items FOR UPDATE
     TO authenticated
     USING (true)
     WITH CHECK (true);
+
+CREATE POLICY "Pengguna terautentikasi dapat menghapus tagihan"
+    ON public.bill_items FOR DELETE
+    TO authenticated
+    USING (true);
+
+-- Bersihkan data pengeluaran yang yatim/orphan (pengeluaran tanpa tagihan) jika ada
+DELETE FROM public.expenses
+WHERE id NOT IN (SELECT DISTINCT expense_id FROM public.bill_items);
