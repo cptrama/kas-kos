@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { ExpenseWithItems, deleteExpenseAction } from "@/app/actions/expense";
 import { formatRupiah, formatDateIndo } from "@/lib/utils";
 import PaymentProofModal, { PaymentProofModalItem } from "@/components/dashboard/PaymentProofModal";
@@ -36,17 +37,41 @@ interface ExpenseTableProps {
 }
 
 export default function ExpenseTable({
-  expenses,
+  expenses: initialExpenses,
   isAdmin,
   currentUserId,
   onOpenCreateModal,
 }: ExpenseTableProps) {
+  const router = useRouter();
+  const [expensesList, setExpensesList] = useState<ExpenseWithItems[]>(initialExpenses);
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "waiting" | "paid">("all");
   const [expandedExpenseId, setExpandedExpenseId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedProofItem, setSelectedProofItem] = useState<PaymentProofModalItem | null>(null);
   const [selectedUploadItem, setSelectedUploadItem] = useState<UploadProofModalItem | null>(null);
   const [selectedReceiptExpense, setSelectedReceiptExpense] = useState<ExpenseWithItems | null>(null);
+
+  // Floating Toast Notification state (Pop-up mengambang 3-6 detik)
+  const [toast, setToast] = useState<{ type: "success" | "danger" | "info"; message: string } | null>(null);
+  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  function triggerToast(type: "success" | "danger" | "info", msg: string) {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast({ type, message: msg });
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+    }, 4500);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    setExpensesList(initialExpenses);
+  }, [initialExpenses]);
 
   // Helper Ikon Kategori
   function getCategoryInfo(category: string) {
@@ -85,16 +110,16 @@ export default function ExpenseTable({
   }
 
   // Filter daftar pengeluaran berdasarkan tab
-  const filteredExpenses = expenses.filter((exp) => {
+  const filteredExpenses = expensesList.filter((exp) => {
     if (filterStatus === "all") return true;
     const overall = getExpenseOverallStatus(exp);
     return overall.status === filterStatus;
   });
 
   // Hitung jumlah untuk counter filter
-  const pendingCount = expenses.filter((e) => getExpenseOverallStatus(e).status === "pending").length;
-  const waitingCount = expenses.filter((e) => getExpenseOverallStatus(e).status === "waiting").length;
-  const paidCount = expenses.filter((e) => getExpenseOverallStatus(e).status === "paid").length;
+  const pendingCount = expensesList.filter((e) => getExpenseOverallStatus(e).status === "pending").length;
+  const waitingCount = expensesList.filter((e) => getExpenseOverallStatus(e).status === "waiting").length;
+  const paidCount = expensesList.filter((e) => getExpenseOverallStatus(e).status === "paid").length;
 
   // Handler Hapus Tagihan
   async function handleDeleteExpense(expenseId: string, title: string) {
@@ -113,7 +138,73 @@ export default function ExpenseTable({
   }
 
   return (
-    <div className="card shadow-sm border-0 mb-4 bg-white">
+    <>
+      {/* Floating Pop-up Notification (Toast Mengambang di Depan Layar 3-6 Detik) */}
+      {toast && (
+        <div
+          style={{
+            position: "fixed",
+            top: "24px",
+            right: "24px",
+            zIndex: 99999,
+            maxWidth: "420px",
+            width: "calc(100% - 48px)",
+            backgroundColor: toast.type === "success" ? "#0ca678" : toast.type === "danger" ? "#d63939" : "#206bc4",
+            color: "#ffffff",
+            borderRadius: "12px",
+            boxShadow: "0 12px 30px rgba(0, 0, 0, 0.35), 0 4px 10px rgba(0, 0, 0, 0.15)",
+            overflow: "hidden",
+            animation: "toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+          }}
+          role="alert"
+        >
+          <div className="d-flex align-items-center p-3">
+            <div className="me-3 flex-shrink-0">
+              <div
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "50%",
+                  backgroundColor: "rgba(255, 255, 255, 0.22)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {toast.type === "success" ? (
+                  <IconCheck size={20} color="#fff" />
+                ) : (
+                  <IconAlertCircle size={20} color="#fff" />
+                )}
+              </div>
+            </div>
+            <div className="flex-grow-1 text-white pe-2">
+              <div className="fw-bold small lh-1 mb-1">
+                {toast.type === "success" ? "Berhasil!" : "Pemberitahuan"}
+              </div>
+              <div className="small lh-sm" style={{ opacity: 0.95 }}>
+                {toast.message}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn-close btn-close-white flex-shrink-0"
+              onClick={() => setToast(null)}
+              aria-label="Tutup"
+            ></button>
+          </div>
+          {/* Progress bar hitung mundur 4.5 detik */}
+          <div
+            style={{
+              height: "4px",
+              backgroundColor: "rgba(255, 255, 255, 0.4)",
+              animation: "toastProgress 4.5s linear forwards",
+            }}
+          />
+        </div>
+      )}
+
+      <div className="card shadow-sm border-0 mb-4 bg-white">
       {/* Header Tabel & Filter Status */}
       <div className="card-header border-bottom p-3 p-md-4">
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 w-100">
@@ -152,7 +243,7 @@ export default function ExpenseTable({
               className={`nav-link ${filterStatus === "all" ? "active fw-bold text-teal" : "text-secondary"}`}
               onClick={() => setFilterStatus("all")}
             >
-              Semua ({expenses.length})
+              Semua ({expensesList.length})
             </button>
           </li>
           <li className="nav-item">
@@ -292,7 +383,10 @@ export default function ExpenseTable({
                           <button
                             type="button"
                             className="btn btn-outline-success btn-sm d-flex align-items-center gap-1"
-                            onClick={() => setSelectedReceiptExpense(exp)}
+                            onClick={() => {
+                              const current = expensesList.find((e) => e.id === exp.id) || exp;
+                              setSelectedReceiptExpense(current);
+                            }}
                             title="Lihat struk pembelian / nomor token resmi"
                           >
                             <IconReceipt2 size={15} />
@@ -302,7 +396,10 @@ export default function ExpenseTable({
                           <button
                             type="button"
                             className="btn btn-outline-teal btn-sm d-flex align-items-center gap-1"
-                            onClick={() => setSelectedReceiptExpense(exp)}
+                            onClick={() => {
+                              const current = expensesList.find((e) => e.id === exp.id) || exp;
+                              setSelectedReceiptExpense(current);
+                            }}
                             title="Unggah struk pembelian kas"
                           >
                             <IconUpload size={14} />
@@ -349,7 +446,7 @@ export default function ExpenseTable({
       {expandedExpenseId && (
         <div className="card-footer bg-light p-3 p-md-4 border-top">
           {(() => {
-            const exp = expenses.find((e) => e.id === expandedExpenseId);
+            const exp = expensesList.find((e) => e.id === expandedExpenseId);
             if (!exp) return null;
 
             return (
@@ -409,7 +506,10 @@ export default function ExpenseTable({
                       className={`btn btn-sm ${
                         exp.proofImageUrl ? "btn-success" : "btn-outline-teal"
                       } d-flex align-items-center gap-1 shadow-sm`}
-                      onClick={() => setSelectedReceiptExpense(exp)}
+                      onClick={() => {
+                        const current = expensesList.find((e) => e.id === exp.id) || exp;
+                        setSelectedReceiptExpense(current);
+                      }}
                     >
                       {exp.proofImageUrl ? <IconReceipt2 size={16} /> : <IconUpload size={16} />}
                       <span>
@@ -585,7 +685,32 @@ export default function ExpenseTable({
         expense={selectedReceiptExpense}
         isAdmin={isAdmin}
         onClose={() => setSelectedReceiptExpense(null)}
+        onSuccess={(updatedData) => {
+          if (selectedReceiptExpense) {
+            setExpensesList((prev) =>
+              prev.map((e) =>
+                e.id === selectedReceiptExpense.id
+                  ? {
+                      ...e,
+                      proofImageUrl: updatedData.proofImageUrl || e.proofImageUrl,
+                      receiptNotes:
+                        updatedData.receiptNotes !== undefined
+                          ? updatedData.receiptNotes
+                          : e.receiptNotes,
+                    }
+                  : e
+              )
+            );
+          }
+          setSelectedReceiptExpense(null);
+          triggerToast(
+            "success",
+            updatedData.message || "Bukti struk pembelian berhasil disimpan dan dipublikasikan!"
+          );
+          router.refresh();
+        }}
       />
     </div>
+    </>
   );
 }

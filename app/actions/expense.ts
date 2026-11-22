@@ -17,6 +17,8 @@ export interface ExpenseResponse {
   error?: string;
   message?: string;
   expenseId?: string;
+  proofImageUrl?: string | null;
+  receiptNotes?: string | null;
 }
 
 export interface BillItemData {
@@ -212,7 +214,7 @@ export async function updateExpenseAction(formData: FormData): Promise<ExpenseRe
   // Ambil data pengeluaran lama
   const { data: existingExp, error: fetchErr } = await supabase
     .from("expenses")
-    .select("id, group_id, total_amount")
+    .select("id, group_id, total_amount, description")
     .eq("id", expenseId)
     .single();
 
@@ -225,12 +227,19 @@ export async function updateExpenseAction(formData: FormData): Promise<ExpenseRe
     return { success: false, error: "Hanya koordinator kos yang dapat memperbarui tagihan ini." };
   }
 
+  // Pertahankan tag struk fallback jika ada
+  let finalDesc = description || null;
+  if (existingExp.description && existingExp.description.includes("__KASKOS_RECEIPT__")) {
+    const receiptPart = existingExp.description.substring(existingExp.description.indexOf("__KASKOS_RECEIPT__"));
+    finalDesc = finalDesc ? `${finalDesc}\n${receiptPart}` : receiptPart;
+  }
+
   // Update pengeluaran
   const { error: updateError } = await supabase
     .from("expenses")
     .update({
       title,
-      description: description || null,
+      description: finalDesc,
       category: categoryRaw,
       total_amount: totalAmount,
       due_date: dueDateRaw,
@@ -519,38 +528,57 @@ export async function getGroupExpenses(groupId: string): Promise<ExpenseWithItem
 
   if (error || !data) return [];
 
-  return data.map((exp: any) => ({
-    id: exp.id,
-    groupId: exp.group_id,
-    title: exp.title,
-    description: exp.description,
-    category: exp.category as ExpenseCategory,
-    totalAmount: Number(exp.total_amount) || 0,
-    dueDate: exp.due_date,
-    createdBy: exp.created_by,
-    proofImageUrl: exp.proof_image_url || null,
-    receiptNotes: exp.receipt_notes || null,
-    createdAt: exp.created_at,
-    updatedAt: exp.updated_at,
-    billItems: Array.isArray(exp.bill_items)
-      ? exp.bill_items.map((item: any) => ({
-          id: item.id,
-          expenseId: item.expense_id,
-          userId: item.user_id,
-          splitAmount: Number(item.split_amount) || 0,
-          status: item.status,
-          proofImageUrl: item.proof_image_url,
-          paidAt: item.paid_at,
-          notes: item.notes,
-          userProfile: item.profiles
-            ? {
-                fullName: item.profiles.full_name,
-                phoneNumber: item.profiles.phone_number,
-              }
-            : undefined,
-        }))
-      : [],
-  }));
+  return data.map((exp: any) => {
+    let proofImageUrl = exp.proof_image_url || null;
+    let receiptNotes = exp.receipt_notes || null;
+    let cleanDescription = exp.description;
+
+    // Ekstraksi fallback struk jika kolom DB belum dimigrasi di Supabase
+    if (exp.description && exp.description.includes("__KASKOS_RECEIPT__")) {
+      try {
+        const parts = exp.description.split("__KASKOS_RECEIPT__");
+        cleanDescription = parts[0].trim() || null;
+        const meta = JSON.parse(parts[1].trim());
+        if (!proofImageUrl && meta.url) proofImageUrl = meta.url;
+        if (!receiptNotes && meta.notes) receiptNotes = meta.notes;
+      } catch {
+        // Abaikan jika parse error
+      }
+    }
+
+    return {
+      id: exp.id,
+      groupId: exp.group_id,
+      title: exp.title,
+      description: cleanDescription,
+      category: exp.category as ExpenseCategory,
+      totalAmount: Number(exp.total_amount) || 0,
+      dueDate: exp.due_date,
+      createdBy: exp.created_by,
+      proofImageUrl,
+      receiptNotes,
+      createdAt: exp.created_at,
+      updatedAt: exp.updated_at,
+      billItems: Array.isArray(exp.bill_items)
+        ? exp.bill_items.map((item: any) => ({
+            id: item.id,
+            expenseId: item.expense_id,
+            userId: item.user_id,
+            splitAmount: Number(item.split_amount) || 0,
+            status: item.status,
+            proofImageUrl: item.proof_image_url,
+            paidAt: item.paid_at,
+            notes: item.notes,
+            userProfile: item.profiles
+              ? {
+                  fullName: item.profiles.full_name,
+                  phoneNumber: item.profiles.phone_number,
+                }
+              : undefined,
+          }))
+        : [],
+    };
+  });
 }
 
 /**
@@ -597,22 +625,37 @@ export async function uploadExpenseReceiptAction(formData: FormData): Promise<Ex
       return { success: false, error: "Ukuran berkas struk maksimal 5 MB." };
     }
 
-    const fileExt = file.name.split(".").pop();
-    const filePath = `receipts/${expenseId}_${Date.now()}.${fileExt}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("transfer-proofs")
-      .upload(filePath, file, { upsert: true });
-
-    if (uploadError) {
-      return { success: false, error: `Gagal mengunggah foto struk: ${uploadError.message}` };
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+    if (!allowedTypes.includes(file.type)) {
+      return { success: false, error: "Format berkas harus berupa gambar (JPG, JPEG, PNG, atau WEBP)." };
     }
 
-    const { data: urlData } = supabase.storage
-      .from("transfer-proofs")
-      .getPublicUrl(filePath);
+    const fileExt = file.name.split(".").pop() || "jpg";
+    const filePath = `receipts/${expenseId}_${Date.now()}.${fileExt}`;
 
-    publicUrl = urlData.publicUrl;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      const { error: uploadError } = await supabase.storage
+        .from("transfer-proofs")
+        .upload(filePath, buffer, {
+          contentType: file.type,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        return { success: false, error: `Gagal mengunggah foto struk: ${uploadError.message}` };
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("transfer-proofs")
+        .getPublicUrl(filePath);
+
+      publicUrl = urlData.publicUrl;
+    } catch (err: any) {
+      return { success: false, error: err?.message || "Gagal memproses berkas gambar." };
+    }
   }
 
   const updatePayload: any = {
@@ -627,16 +670,43 @@ export async function uploadExpenseReceiptAction(formData: FormData): Promise<Ex
     .eq("id", expenseId);
 
   if (updateError) {
-    return {
-      success: false,
-      error: `Gagal memperbarui struk: ${updateError.message}. Pastikan file migrasi 'add_expense_receipt_proof.sql' sudah dijalankan di SQL Editor Supabase.`,
-    };
+    // Fallback jika kolom proof_image_url belum dieksekusi di database Supabase:
+    // Simpan ke kolom description dengan metadata terstruktur agar aplikasi tetap berjalan 100%
+    const { data: currentExp } = await supabase
+      .from("expenses")
+      .select("description")
+      .eq("id", expenseId)
+      .single();
+
+    let baseDesc = currentExp?.description || "";
+    if (baseDesc.includes("__KASKOS_RECEIPT__")) {
+      baseDesc = baseDesc.split("__KASKOS_RECEIPT__")[0].trim();
+    }
+    const receiptTag = `__KASKOS_RECEIPT__${JSON.stringify({ url: publicUrl, notes: receiptNotes })}`;
+    const newDescription = baseDesc ? `${baseDesc}\n${receiptTag}` : receiptTag;
+
+    const { error: fallbackUpdateErr } = await supabase
+      .from("expenses")
+      .update({
+        description: newDescription,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", expenseId);
+
+    if (fallbackUpdateErr) {
+      return {
+        success: false,
+        error: `Gagal menyimpan struk: ${fallbackUpdateErr.message}`,
+      };
+    }
   }
 
   revalidatePath("/dashboard", "layout");
   return {
     success: true,
     message: `Bukti struk pembelian untuk "${exp.title}" berhasil disimpan dan dapat dilihat oleh seluruh anggota kos!`,
+    proofImageUrl: publicUrl,
+    receiptNotes: receiptNotes || null,
   };
 }
 

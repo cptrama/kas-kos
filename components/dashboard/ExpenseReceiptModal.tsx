@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ExpenseWithItems, uploadExpenseReceiptAction } from "@/app/actions/expense";
 import { formatRupiah, formatDateIndo } from "@/lib/utils";
 import {
@@ -21,7 +21,11 @@ interface ExpenseReceiptModalProps {
   isOpen: boolean;
   isAdmin: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (updatedData: {
+    proofImageUrl: string | null;
+    receiptNotes: string | null;
+    message?: string;
+  }) => void;
 }
 
 export default function ExpenseReceiptModal({
@@ -37,6 +41,15 @@ export default function ExpenseReceiptModal({
   const [copiedToken, setCopiedToken] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "danger"; text: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Pastikan form unggah selalu di-reset saat modal dibuka atau ditutup
+  useEffect(() => {
+    if (!isOpen) {
+      setShowUploadForm(false);
+      setPreviewUrl(null);
+      setMessage(null);
+    }
+  }, [isOpen, expense?.id]);
 
   if (!isOpen || !expense) return null;
 
@@ -72,16 +85,32 @@ export default function ExpenseReceiptModal({
     const formData = new FormData(e.currentTarget);
     formData.append("expense_id", expense.id);
 
-    const res = await uploadExpenseReceiptAction(formData);
-    setIsLoading(false);
+    try {
+      const res = await uploadExpenseReceiptAction(formData);
+      setIsLoading(false);
 
-    if (!res.success) {
-      setMessage({ type: "danger", text: res.error || "Gagal mengunggah bukti struk." });
-    } else {
-      setMessage({ type: "success", text: res.message || "Bukti struk berhasil disimpan!" });
-      setShowUploadForm(false);
-      setPreviewUrl(null);
-      if (onSuccess) onSuccess();
+      if (!res.success) {
+        const errMsg = res.error || "Gagal mengunggah bukti struk.";
+        setMessage({ type: "danger", text: errMsg });
+      } else {
+        setShowUploadForm(false);
+        setPreviewUrl(null);
+
+        if (onSuccess) {
+          onSuccess({
+            proofImageUrl: res.proofImageUrl || previewUrl,
+            receiptNotes: (formData.get("receipt_notes")?.toString().trim()) || null,
+            message: res.message || "Bukti struk pembelian berhasil disimpan dan dipublikasikan!",
+          });
+        }
+
+        // Langsung close ke halaman utama, tidak stay pada menu upload
+        onClose();
+      }
+    } catch (err: any) {
+      setIsLoading(false);
+      const errMsg = err?.message || "Terjadi kendala jaringan saat mengunggah.";
+      setMessage({ type: "danger", text: errMsg });
     }
   }
 
