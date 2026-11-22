@@ -43,6 +43,8 @@ export interface ExpenseWithItems {
   totalAmount: number;
   dueDate?: string | null;
   createdBy?: string | null;
+  proofImageUrl?: string | null;
+  receiptNotes?: string | null;
   createdAt: string;
   updatedAt: string;
   billItems: BillItemData[];
@@ -445,7 +447,7 @@ export async function rejectPaymentAction(formData: FormData): Promise<ExpenseRe
 export async function getGroupExpenses(groupId: string): Promise<ExpenseWithItems[]> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  let { data, error }: { data: any; error: any } = await supabase
     .from("expenses")
     .select(`
       id,
@@ -456,6 +458,8 @@ export async function getGroupExpenses(groupId: string): Promise<ExpenseWithItem
       total_amount,
       due_date,
       created_by,
+      proof_image_url,
+      receipt_notes,
       created_at,
       updated_at,
       bill_items (
@@ -476,6 +480,43 @@ export async function getGroupExpenses(groupId: string): Promise<ExpenseWithItem
     .eq("group_id", groupId)
     .order("created_at", { ascending: false });
 
+  // Fallback jika tabel expenses belum menjalankan migrasi add_expense_receipt_proof.sql
+  if (error && error.message?.includes("proof_image_url")) {
+    const fallback = await supabase
+      .from("expenses")
+      .select(`
+        id,
+        group_id,
+        title,
+        description,
+        category,
+        total_amount,
+        due_date,
+        created_by,
+        created_at,
+        updated_at,
+        bill_items (
+          id,
+          expense_id,
+          user_id,
+          split_amount,
+          status,
+          proof_image_url,
+          paid_at,
+          notes,
+          profiles:user_id (
+            full_name,
+            phone_number
+          )
+        )
+      `)
+      .eq("group_id", groupId)
+      .order("created_at", { ascending: false });
+
+    data = fallback.data;
+    error = fallback.error;
+  }
+
   if (error || !data) return [];
 
   return data.map((exp: any) => ({
@@ -487,6 +528,8 @@ export async function getGroupExpenses(groupId: string): Promise<ExpenseWithItem
     totalAmount: Number(exp.total_amount) || 0,
     dueDate: exp.due_date,
     createdBy: exp.created_by,
+    proofImageUrl: exp.proof_image_url || null,
+    receiptNotes: exp.receipt_notes || null,
     createdAt: exp.created_at,
     updatedAt: exp.updated_at,
     billItems: Array.isArray(exp.bill_items)
@@ -508,6 +551,93 @@ export async function getGroupExpenses(groupId: string): Promise<ExpenseWithItem
         }))
       : [],
   }));
+}
+
+/**
+ * Server Action: Mengunggah Struk Pembelian / Realisasi Pengeluaran dari Koordinator Kos
+ */
+export async function uploadExpenseReceiptAction(formData: FormData): Promise<ExpenseResponse> {
+  const expenseId = formData.get("expense_id")?.toString().trim();
+  const receiptNotes = formData.get("receipt_notes")?.toString().trim() || "";
+  const file = formData.get("receipt_file") as File | null;
+
+  if (!expenseId) {
+    return { success: false, error: "ID pengeluaran tidak valid." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Sesi telah berakhir. Silakan login kembali." };
+  }
+
+  const { data: exp, error: expErr } = await supabase
+    .from("expenses")
+    .select("id, group_id, title")
+    .eq("id", expenseId)
+    .single();
+
+  if (expErr || !exp) {
+    return { success: false, error: "Data pengeluaran tidak ditemukan." };
+  }
+
+  const isAdmin = await verifyGroupAdmin(supabase, exp.group_id, user.id);
+  if (!isAdmin) {
+    return { success: false, error: "Hanya koordinator kos yang berwenang mengunggah struk pembelian." };
+  }
+
+  let publicUrl: string | null = null;
+
+  if (file && file.size > 0) {
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      return { success: false, error: "Ukuran berkas struk maksimal 5 MB." };
+    }
+
+    const fileExt = file.name.split(".").pop();
+    const filePath = `receipts/${expenseId}_${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("transfer-proofs")
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      return { success: false, error: `Gagal mengunggah foto struk: ${uploadError.message}` };
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("transfer-proofs")
+      .getPublicUrl(filePath);
+
+    publicUrl = urlData.publicUrl;
+  }
+
+  const updatePayload: any = {
+    updated_at: new Date().toISOString(),
+  };
+  if (publicUrl) updatePayload.proof_image_url = publicUrl;
+  if (receiptNotes !== undefined) updatePayload.receipt_notes = receiptNotes;
+
+  const { error: updateError } = await supabase
+    .from("expenses")
+    .update(updatePayload)
+    .eq("id", expenseId);
+
+  if (updateError) {
+    return {
+      success: false,
+      error: `Gagal memperbarui struk: ${updateError.message}. Pastikan file migrasi 'add_expense_receipt_proof.sql' sudah dijalankan di SQL Editor Supabase.`,
+    };
+  }
+
+  revalidatePath("/dashboard", "layout");
+  return {
+    success: true,
+    message: `Bukti struk pembelian untuk "${exp.title}" berhasil disimpan dan dapat dilihat oleh seluruh anggota kos!`,
+  };
 }
 
 /**

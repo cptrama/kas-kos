@@ -5,6 +5,7 @@ import { ExpenseWithItems, deleteExpenseAction } from "@/app/actions/expense";
 import { formatRupiah, formatDateIndo } from "@/lib/utils";
 import PaymentProofModal, { PaymentProofModalItem } from "@/components/dashboard/PaymentProofModal";
 import UploadProofModal, { UploadProofModalItem } from "@/components/dashboard/UploadProofModal";
+import ExpenseReceiptModal from "@/components/dashboard/ExpenseReceiptModal";
 import {
   IconBolt,
   IconWifi,
@@ -45,6 +46,7 @@ export default function ExpenseTable({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedProofItem, setSelectedProofItem] = useState<PaymentProofModalItem | null>(null);
   const [selectedUploadItem, setSelectedUploadItem] = useState<UploadProofModalItem | null>(null);
+  const [selectedReceiptExpense, setSelectedReceiptExpense] = useState<ExpenseWithItems | null>(null);
 
   // Helper Ikon Kategori
   function getCategoryInfo(category: string) {
@@ -285,6 +287,29 @@ export default function ExpenseTable({
                     {/* Tombol Aksi */}
                     <td className="text-end">
                       <div className="d-flex justify-content-end gap-1">
+                        {/* Tombol Lihat/Unggah Struk Pembelian Riil Koordinator */}
+                        {exp.proofImageUrl ? (
+                          <button
+                            type="button"
+                            className="btn btn-outline-success btn-sm d-flex align-items-center gap-1"
+                            onClick={() => setSelectedReceiptExpense(exp)}
+                            title="Lihat struk pembelian / nomor token resmi"
+                          >
+                            <IconReceipt2 size={15} />
+                            <span className="d-none d-lg-inline">Struk</span>
+                          </button>
+                        ) : isAdmin ? (
+                          <button
+                            type="button"
+                            className="btn btn-outline-teal btn-sm d-flex align-items-center gap-1"
+                            onClick={() => setSelectedReceiptExpense(exp)}
+                            title="Unggah struk pembelian kas"
+                          >
+                            <IconUpload size={14} />
+                            <span className="d-none d-lg-inline">Unggah Struk</span>
+                          </button>
+                        ) : null}
+
                         <button
                           type="button"
                           className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
@@ -340,6 +365,62 @@ export default function ExpenseTable({
                   >
                     Tutup Rincian
                   </button>
+                </div>
+
+                {/* Banner Bukti Realisasi Pembelian Kas Koordinator (Anti-Penggelapan Dana) */}
+                <div
+                  className={`card ${
+                    exp.proofImageUrl ? "bg-green-lt border-green" : "bg-white border border-dashed"
+                  } p-3 mb-3 shadow-none`}
+                >
+                  <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                      <div
+                        className={`fw-bold ${
+                          exp.proofImageUrl ? "text-success" : "text-dark"
+                        } d-flex align-items-center gap-1`}
+                      >
+                        <IconShieldCheck size={18} />
+                        <span>
+                          {exp.proofImageUrl
+                            ? "Struk Pembelian Kas Terlampir & Terverifikasi"
+                            : "Struk Bukti Pembelian Belum Dilampirkan"}
+                        </span>
+                      </div>
+                      {exp.receiptNotes ? (
+                        <div className="small text-dark mt-1">
+                          <strong>Catatan / No. Token:</strong>{" "}
+                          <span className="font-monospace fw-bold bg-white px-2 py-0.5 rounded border">
+                            {exp.receiptNotes}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="small text-secondary mt-1">
+                          {exp.proofImageUrl
+                            ? "Koordinator telah melampirkan foto struk pembelian resmi yang dapat diperiksa oleh semua roommate."
+                            : isAdmin
+                            ? "Dana sudah terkumpul? Harap lampirkan foto struk pembelian token/kuitansi agar transparan bagi semua penghuni."
+                            : "Menunggu koordinator melampirkan foto struk pembelian token / kuitansi resmi."}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${
+                        exp.proofImageUrl ? "btn-success" : "btn-outline-teal"
+                      } d-flex align-items-center gap-1 shadow-sm`}
+                      onClick={() => setSelectedReceiptExpense(exp)}
+                    >
+                      {exp.proofImageUrl ? <IconReceipt2 size={16} /> : <IconUpload size={16} />}
+                      <span>
+                        {exp.proofImageUrl
+                          ? "Lihat Struk Pembelian"
+                          : isAdmin
+                          ? "Unggah Struk Pembelian"
+                          : "Periksa Status Struk"}
+                      </span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="row g-2">
@@ -496,6 +577,14 @@ export default function ExpenseTable({
         isOpen={!!selectedUploadItem}
         item={selectedUploadItem}
         onClose={() => setSelectedUploadItem(null)}
+      />
+
+      {/* Modal Transparansi Bukti Pembelian / Struk Pengeluaran Kas (Anti-Penggelapan Dana) */}
+      <ExpenseReceiptModal
+        isOpen={!!selectedReceiptExpense}
+        expense={selectedReceiptExpense}
+        isAdmin={isAdmin}
+        onClose={() => setSelectedReceiptExpense(null)}
       />
     </div>
   );
