@@ -15,13 +15,9 @@ export default function LogoutButton() {
 
     try {
       await signOutAction();
-    } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) {
-        return;
-      }
-      setIsLoggingOut(false);
-      showLoading(false);
-      showToast("danger", "Gagal keluar akun. Silakan coba kembali.");
+      window.location.href = "/login";
+    } catch {
+      window.location.href = "/login";
     }
   }
 

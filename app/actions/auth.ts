@@ -2,12 +2,12 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 export interface AuthResponse {
   success: boolean;
   error?: string;
   message?: string;
+  redirect?: string;
 }
 
 /**
@@ -56,7 +56,11 @@ export async function signUpAction(formData: FormData): Promise<AuthResponse> {
   // Jika Supabase mengonfirmasi sesi langsung (tanpa verifikasi email manual)
   if (data.session) {
     revalidatePath("/", "layout");
-    redirect("/dashboard");
+    return {
+      success: true,
+      message: "Pendaftaran berhasil!",
+      redirect: "/dashboard",
+    };
   }
 
   return {
@@ -93,17 +97,17 @@ export async function signInAction(formData: FormData): Promise<AuthResponse> {
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  return { success: true, redirect: "/dashboard" };
 }
 
 /**
  * Server Action: Keluar Akun (Logout)
  */
-export async function signOutAction(): Promise<void> {
+export async function signOutAction(): Promise<AuthResponse> {
   const supabase = await createClient();
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
-  redirect("/login");
+  return { success: true, redirect: "/login" };
 }
 
 /**

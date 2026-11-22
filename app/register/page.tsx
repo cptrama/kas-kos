@@ -45,16 +45,18 @@ export default function RegisterPage() {
         showLoading(false);
         setIsLoading(false);
         showToast("danger", result.error);
-      } else if (result && result.success && result.message) {
-        showLoading(false);
-        setIsLoading(false);
-        showToast("success", result.message);
+      } else if (result && result.success) {
+        if (result.redirect) {
+          showToast("success", "Pendaftaran berhasil! Membuka Dashboard...");
+          // Navigasi browser riil: memicu tanda panah refresh berputar menjadi [X] dan tab browser memutar
+          window.location.href = result.redirect;
+        } else {
+          showLoading(false);
+          setIsLoading(false);
+          showToast("success", result.message || "Pendaftaran berhasil! Silakan periksa email Anda atau langsung masuk.");
+        }
       }
-    } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) {
-        showToast("success", "Pendaftaran berhasil! Mengalihkan ke dashboard...");
-        return;
-      }
+    } catch {
       showLoading(false);
       setIsLoading(false);
       showToast("danger", "Terjadi kendala saat mendaftar. Silakan coba kembali beberapa saat lagi.");

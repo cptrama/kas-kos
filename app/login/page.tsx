@@ -57,21 +57,15 @@ export default function LoginPage() {
         showLoading(false);
         setIsLoading(false);
         showToast("danger", result.error);
-      } else {
-        // Hapus kredensial tersimpan setelah berhasil masuk
-        try {
-          localStorage.removeItem("kaskos_saved_auth");
-        } catch {}
-      }
-    } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) {
+      } else if (result && result.success) {
         try {
           localStorage.removeItem("kaskos_saved_auth");
         } catch {}
         showToast("success", "Login berhasil! Membuka Dashboard...");
-        // Tetap biarkan isLoading & showLoading aktif hingga browser selesai pindah halaman
-        return;
+        // Navigasi browser riil: memicu tanda panah refresh berputar menjadi [X] dan tab browser memutar
+        window.location.href = result.redirect || "/dashboard";
       }
+    } catch {
       showLoading(false);
       setIsLoading(false);
       showToast("danger", "Terjadi kendala saat mencoba masuk. Silakan periksa kembali email & kata sandi Anda.");
