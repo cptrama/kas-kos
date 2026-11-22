@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createGroupAction, joinGroupByCodeAction, updateGroupPaymentInfoAction } from "@/app/actions/group";
 import { IconPlus, IconDoorEnter, IconSettings, IconCopy, IconCheck, IconBuildingCommunity, IconAlertCircle } from "@tabler/icons-react";
 
@@ -22,103 +22,155 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
   const [showSettings, setShowSettings] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "danger"; text: string } | null>(null);
-  const [modalError, setModalError] = useState<string | null>(null);
+  
+  // Floating Toast Notification state (Pop-up mengambang 3-6 detik)
+  const [toast, setToast] = useState<{ type: "success" | "danger" | "info"; message: string } | null>(null);
+  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  function triggerToast(type: "success" | "danger" | "info", msg: string) {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast({ type, message: msg });
+    // Muncul selama 4.5 detik (sesuai permintaan 3 - 6 detik)
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+    }, 4500);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
 
   function copyInviteCode() {
     if (!activeGroup?.invite_code) return;
     navigator.clipboard.writeText(activeGroup.invite_code);
     setIsCopied(true);
+    triggerToast("success", "Kode invite berhasil disalin ke clipboard!");
     setTimeout(() => setIsCopied(false), 2000);
-  }
-
-  function openCreateModal() {
-    setModalError(null);
-    setShowCreate(true);
-  }
-
-  function openJoinModal() {
-    setModalError(null);
-    setShowJoin(true);
-  }
-
-  function openSettingsModal() {
-    setModalError(null);
-    setShowSettings(true);
   }
 
   async function handleCreateGroup(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
-    setModalError(null);
-    setMessage(null);
     const formData = new FormData(e.currentTarget);
     const res = await createGroupAction(formData);
     setIsLoading(false);
     if (!res.success) {
-      setModalError(res.error || "Gagal membuat grup.");
+      triggerToast("danger", res.error || "Gagal membuat grup.");
     } else {
       setShowCreate(false);
-      setMessage({ type: "success", text: "Grup kos berhasil dibuat!" });
+      triggerToast("success", "Grup kos baru berhasil dibuat!");
     }
   }
 
   async function handleJoinGroup(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
-    setModalError(null);
-    setMessage(null);
     const formData = new FormData(e.currentTarget);
     const res = await joinGroupByCodeAction(formData);
     setIsLoading(false);
     if (!res.success) {
-      setModalError(res.error || "Gagal bergabung.");
+      triggerToast("danger", res.error || "Gagal bergabung ke grup.");
     } else {
       setShowJoin(false);
-      setMessage({ type: "success", text: res.message || "Berhasil bergabung!" });
+      triggerToast("success", res.message || "Berhasil bergabung ke grup!");
     }
   }
 
   async function handleUpdateSettings(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
-    setModalError(null);
-    setMessage(null);
     const formData = new FormData(e.currentTarget);
     const res = await updateGroupPaymentInfoAction(formData);
     setIsLoading(false);
     if (!res.success) {
-      setModalError(res.error || "Gagal memperbarui rekening.");
+      triggerToast("danger", res.error || "Gagal memperbarui rekening.");
     } else {
       setShowSettings(false);
-      setMessage({ type: "success", text: "Rekening kas berhasil diperbarui!" });
+      triggerToast("success", "Rekening kas berhasil diperbarui!");
     }
   }
 
   return (
     <>
-      {/* Alert Notifikasi di Halaman Dashboard (Hanya saat modal tertutup) */}
-      {message && !showCreate && !showJoin && !showSettings && (
-        <div className={`alert alert-${message.type} alert-dismissible mb-4`} role="alert">
-          <div className="d-flex justify-content-between align-items-center">
-            <div>{message.text}</div>
-            <button type="button" className="btn-close" onClick={() => setMessage(null)}></button>
+      {/* Floating Pop-up Notification (Toast Mengambang di Depan Layar 3-6 Detik) */}
+      {toast && (
+        <div
+          style={{
+            position: "fixed",
+            top: "24px",
+            right: "24px",
+            zIndex: 99999,
+            maxWidth: "420px",
+            width: "calc(100% - 48px)",
+            backgroundColor: toast.type === "success" ? "#0ca678" : toast.type === "danger" ? "#d63939" : "#206bc4",
+            color: "#ffffff",
+            borderRadius: "12px",
+            boxShadow: "0 12px 30px rgba(0, 0, 0, 0.35), 0 4px 10px rgba(0, 0, 0, 0.15)",
+            overflow: "hidden",
+            animation: "toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+          }}
+          role="alert"
+        >
+          <div className="d-flex align-items-center p-3">
+            <div className="me-3 flex-shrink-0">
+              <div
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "50%",
+                  backgroundColor: "rgba(255, 255, 255, 0.22)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {toast.type === "success" ? (
+                  <IconCheck size={20} color="#fff" />
+                ) : (
+                  <IconAlertCircle size={20} color="#fff" />
+                )}
+              </div>
+            </div>
+            <div className="flex-grow-1 text-white pe-2">
+              <div className="fw-bold small lh-1 mb-1">
+                {toast.type === "success" ? "Berhasil!" : "Pemberitahuan"}
+              </div>
+              <div className="small lh-sm" style={{ opacity: 0.95 }}>
+                {toast.message}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn-close btn-close-white flex-shrink-0"
+              onClick={() => setToast(null)}
+              aria-label="Tutup"
+            ></button>
           </div>
+          {/* Progress bar hitung mundur 4.5 detik */}
+          <div
+            style={{
+              height: "4px",
+              backgroundColor: "rgba(255, 255, 255, 0.4)",
+              animation: "toastProgress 4.5s linear forwards",
+            }}
+          />
         </div>
       )}
 
       {/* Action Buttons */}
       <div className="d-flex gap-2 flex-wrap mb-4">
-        <button className="btn btn-teal d-flex align-items-center gap-2" onClick={openCreateModal}>
+        <button className="btn btn-teal d-flex align-items-center gap-2" onClick={() => setShowCreate(true)}>
           <IconPlus size={18} />
           <span>Buat Grup Kos Baru</span>
         </button>
-        <button className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={openJoinModal}>
+        <button className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={() => setShowJoin(true)}>
           <IconDoorEnter size={18} />
           <span>Gabung dengan Kode</span>
         </button>
         {activeGroup && isAdmin && (
-          <button className="btn btn-outline-teal d-flex align-items-center gap-2" onClick={openSettingsModal}>
+          <button className="btn btn-outline-teal d-flex align-items-center gap-2" onClick={() => setShowSettings(true)}>
             <IconSettings size={18} />
             <span>Atur Rekening Kas</span>
           </button>
@@ -167,15 +219,6 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
               </div>
               <form onSubmit={handleCreateGroup}>
                 <div className="modal-body p-4">
-                  {/* Validasi Pop-up Muncul Langsung di Depan Layar Pengguna di dalam Modal */}
-                  {modalError && (
-                    <div className="alert alert-danger alert-dismissible d-flex align-items-start gap-2 mb-3" role="alert">
-                      <IconAlertCircle size={20} className="text-danger flex-shrink-0 mt-1" />
-                      <div className="flex-grow-1 small">{modalError}</div>
-                      <button type="button" className="btn-close" onClick={() => setModalError(null)}></button>
-                    </div>
-                  )}
-
                   <div className="mb-3">
                     <label className="form-label required">Nama Grup Kos / Kontrakan</label>
                     <input
@@ -250,15 +293,6 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
               </div>
               <form onSubmit={handleJoinGroup}>
                 <div className="modal-body p-4">
-                  {/* Validasi Pop-up Muncul Langsung di Depan Layar Pengguna di dalam Modal */}
-                  {modalError && (
-                    <div className="alert alert-danger alert-dismissible d-flex align-items-start gap-2 mb-3" role="alert">
-                      <IconAlertCircle size={20} className="text-danger flex-shrink-0 mt-1" />
-                      <div className="flex-grow-1 small">{modalError}</div>
-                      <button type="button" className="btn-close" onClick={() => setModalError(null)}></button>
-                    </div>
-                  )}
-
                   <div className="mb-3">
                     <label className="form-label required">Masukkan Kode Undangan 6-Karakter</label>
                     <input
@@ -300,15 +334,6 @@ export default function GroupModals({ activeGroup, isAdmin }: GroupModalsProps) 
               <form onSubmit={handleUpdateSettings}>
                 <input type="hidden" name="group_id" value={activeGroup.id} />
                 <div className="modal-body p-4">
-                  {/* Validasi Pop-up Muncul Langsung di Depan Layar Pengguna di dalam Modal */}
-                  {modalError && (
-                    <div className="alert alert-danger alert-dismissible d-flex align-items-start gap-2 mb-3" role="alert">
-                      <IconAlertCircle size={20} className="text-danger flex-shrink-0 mt-1" />
-                      <div className="flex-grow-1 small">{modalError}</div>
-                      <button type="button" className="btn-close" onClick={() => setModalError(null)}></button>
-                    </div>
-                  )}
-
                   <p className="text-muted small mb-3">
                     Informasi ini akan muncul di dashboard anggota saat mereka akan mentransfer uang kas bersama.
                   </p>

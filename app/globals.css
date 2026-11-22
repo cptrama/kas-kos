@@ -192,3 +192,24 @@ body.theme-dark {
 .theme-dark .card-table tr td {
   border-color: #334155 !important;
 }
+
+/* Floating Pop-up Toast Animations */
+@keyframes toastSlideIn {
+  from {
+    transform: translateY(-24px) scale(0.94);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes toastProgress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
