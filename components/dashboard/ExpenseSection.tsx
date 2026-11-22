@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import CoordinatorQuickActions from "@/components/dashboard/CoordinatorQuickActions";
 import CreateExpenseModal from "@/components/dashboard/CreateExpenseModal";
 import ExpenseTable from "@/components/dashboard/ExpenseTable";
 import { ExpenseWithItems } from "@/app/actions/expense";
@@ -29,14 +28,6 @@ export default function ExpenseSection({
 
   return (
     <>
-      {/* Tombol Aksi Cepat Koordinator (Quick Actions) */}
-      <CoordinatorQuickActions
-        inviteCode={activeGroup.invite_code}
-        groupName={activeGroup.group_name}
-        isAdmin={isAdmin}
-        onOpenCreateExpense={() => setIsModalOpen(true)}
-      />
-
       {/* Modal Pop-up Tambah Tagihan Kas Bersama (Auto-Split Engine) */}
       <CreateExpenseModal
         groupId={activeGroup.id}
